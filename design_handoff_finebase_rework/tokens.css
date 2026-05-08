@@ -1,0 +1,624 @@
+/* ────────────────────────────────────────────────────────────────────
+   FineBase — Design Tokens
+   Three variations × (light / dark)
+   ──────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+/* ─── Base / shared ───────────────────────────────────────────────── */
+:root {
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  /* Spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+
+  /* Type scale (px) */
+  --t-xs: 11px;
+  --t-sm: 12px;
+  --t-md: 13px;
+  --t-base: 14px;
+  --t-lg: 16px;
+  --t-xl: 20px;
+  --t-2xl: 24px;
+  --t-3xl: 32px;
+  --t-4xl: 44px;
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+
+  /* Per-variation tokens are set on .v-obsidian / .v-riverstone / .v-voltage */
+}
+
+/* ─── Variation A · Obsidian (Linear-inspired) ───────────────────── */
+.v-obsidian {
+  /* light */
+  --bg: #fafafa;
+  --bg-soft: #f4f4f5;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --border: #e4e4e7;
+  --border-soft: #ececef;
+  --text: #09090b;
+  --text-2: #3f3f46;
+  --text-3: #71717a;
+  --text-4: #a1a1aa;
+
+  --accent: oklch(0.52 0.18 268);          /* indigo */
+  --accent-fg: #ffffff;
+  --accent-soft: oklch(0.96 0.04 268);
+  --accent-line: oklch(0.85 0.08 268);
+
+  --pos: oklch(0.55 0.13 158);
+  --pos-soft: oklch(0.96 0.04 158);
+  --neg: oklch(0.55 0.18 25);
+  --neg-soft: oklch(0.96 0.03 25);
+  --warn: oklch(0.7 0.13 75);
+  --warn-soft: oklch(0.96 0.04 80);
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,.02), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 1px 0 rgba(0,0,0,.02), 0 6px 18px -6px rgba(15,15,30,.12);
+
+  --radius: var(--r-md);
+  --letter-tight: -0.012em;
+  --letter-tighter: -0.022em;
+
+  --sidebar-bg: #fafafa;
+  --sidebar-border: var(--border);
+  --header-bg: var(--bg);
+}
+.v-obsidian.dark {
+  --bg: #08080a;
+  --bg-soft: #0d0d10;
+  --surface: #111114;
+  --surface-2: #16161a;
+  --border: #232328;
+  --border-soft: #1a1a1e;
+  --text: #fafafa;
+  --text-2: #d4d4d8;
+  --text-3: #8b8b93;
+  --text-4: #5a5a63;
+
+  --accent: oklch(0.72 0.16 268);
+  --accent-fg: #08080a;
+  --accent-soft: oklch(0.28 0.08 268);
+  --accent-line: oklch(0.4 0.12 268);
+
+  --pos: oklch(0.72 0.15 158);
+  --pos-soft: oklch(0.25 0.06 158);
+  --neg: oklch(0.7 0.18 25);
+  --neg-soft: oklch(0.28 0.08 25);
+  --warn: oklch(0.78 0.13 80);
+  --warn-soft: oklch(0.28 0.06 80);
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,.5);
+  --shadow-md: 0 8px 24px rgba(0,0,0,.6);
+
+  --sidebar-bg: #0a0a0c;
+  --sidebar-border: var(--border);
+  --header-bg: var(--bg);
+}
+
+/* ─── Variation B · Riverstone (Mercury-inspired) ────────────────── */
+.v-riverstone {
+  --bg: #f6f5f1;
+  --bg-soft: #efede7;
+  --surface: #ffffff;
+  --surface-2: #fbfaf6;
+  --border: #e6e3da;
+  --border-soft: #efece4;
+  --text: #1a1a17;
+  --text-2: #494640;
+  --text-3: #7a766c;
+  --text-4: #aba79b;
+
+  --accent: oklch(0.5 0.07 178);            /* muted teal */
+  --accent-fg: #ffffff;
+  --accent-soft: oklch(0.95 0.03 178);
+  --accent-line: oklch(0.85 0.05 178);
+
+  --pos: oklch(0.55 0.1 165);
+  --pos-soft: oklch(0.95 0.04 165);
+  --neg: oklch(0.55 0.15 30);
+  --neg-soft: oklch(0.95 0.04 30);
+  --warn: oklch(0.7 0.12 70);
+  --warn-soft: oklch(0.95 0.05 75);
+
+  --shadow-sm: 0 1px 0 rgba(50,40,20,.03);
+  --shadow-md: 0 1px 2px rgba(50,40,20,.04), 0 12px 24px -12px rgba(50,40,20,.1);
+
+  --radius: var(--r-lg);
+  --letter-tight: -0.014em;
+  --letter-tighter: -0.026em;
+
+  --sidebar-bg: #f6f5f1;
+  --sidebar-border: var(--border);
+  --header-bg: transparent;
+}
+.v-riverstone.dark {
+  --bg: #14130f;
+  --bg-soft: #1c1b16;
+  --surface: #1f1e19;
+  --surface-2: #25241e;
+  --border: #2f2e26;
+  --border-soft: #26251f;
+  --text: #f4f1e9;
+  --text-2: #cfcabd;
+  --text-3: #948f80;
+  --text-4: #5e5a4f;
+
+  --accent: oklch(0.72 0.09 178);
+  --accent-fg: #14130f;
+  --accent-soft: oklch(0.28 0.05 178);
+  --accent-line: oklch(0.4 0.07 178);
+
+  --pos: oklch(0.72 0.13 165);
+  --pos-soft: oklch(0.26 0.05 165);
+  --neg: oklch(0.7 0.18 30);
+  --neg-soft: oklch(0.26 0.06 30);
+  --warn: oklch(0.78 0.12 75);
+  --warn-soft: oklch(0.26 0.05 75);
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,.4);
+  --shadow-md: 0 12px 28px rgba(0,0,0,.45);
+
+  --sidebar-bg: #14130f;
+  --header-bg: var(--bg);
+}
+
+/* ─── Variation C · Voltage (Vercel-inspired) ────────────────────── */
+.v-voltage {
+  --bg: #ffffff;
+  --bg-soft: #f6f6f6;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --border: #ebebeb;
+  --border-soft: #f1f1f1;
+  --text: #000000;
+  --text-2: #2e2e2e;
+  --text-3: #6e6e6e;
+  --text-4: #a8a8a8;
+
+  --accent: oklch(0.74 0.16 65);            /* warm amber */
+  --accent-fg: #1a0e00;
+  --accent-soft: oklch(0.96 0.04 70);
+  --accent-line: oklch(0.86 0.09 65);
+
+  --pos: oklch(0.6 0.16 150);
+  --pos-soft: oklch(0.96 0.04 150);
+  --neg: oklch(0.55 0.2 22);
+  --neg-soft: oklch(0.96 0.03 22);
+  --warn: oklch(0.74 0.16 65);
+  --warn-soft: oklch(0.96 0.04 70);
+
+  --shadow-sm: 0 0 0 1px rgba(0,0,0,.04);
+  --shadow-md: 0 0 0 1px rgba(0,0,0,.06), 0 8px 24px -8px rgba(0,0,0,.12);
+
+  --radius: var(--r-sm);
+  --letter-tight: -0.018em;
+  --letter-tighter: -0.034em;
+
+  --sidebar-bg: #ffffff;
+  --sidebar-border: var(--border);
+  --header-bg: var(--surface);
+}
+.v-voltage.dark {
+  --bg: #000000;
+  --bg-soft: #060606;
+  --surface: #0a0a0a;
+  --surface-2: #111111;
+  --border: #1f1f1f;
+  --border-soft: #161616;
+  --text: #ffffff;
+  --text-2: #e4e4e4;
+  --text-3: #888888;
+  --text-4: #555555;
+
+  --accent: oklch(0.78 0.17 65);
+  --accent-fg: #0a0a0a;
+  --accent-soft: oklch(0.22 0.07 65);
+  --accent-line: oklch(0.42 0.13 65);
+
+  --pos: oklch(0.74 0.18 150);
+  --pos-soft: oklch(0.22 0.06 150);
+  --neg: oklch(0.7 0.2 22);
+  --neg-soft: oklch(0.22 0.07 22);
+  --warn: oklch(0.78 0.17 65);
+  --warn-soft: oklch(0.22 0.07 65);
+
+  --shadow-sm: 0 0 0 1px rgba(255,255,255,.06);
+  --shadow-md: 0 0 0 1px rgba(255,255,255,.06), 0 8px 24px rgba(0,0,0,.6);
+
+  --sidebar-bg: #000;
+  --header-bg: var(--bg);
+}
+
+/* ─── App-shell (used by all variations) ─────────────────────────── */
+.fb {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--t-base);
+  letter-spacing: var(--letter-tight);
+  line-height: 1.45;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+.fb * { box-sizing: border-box; }
+.fb button { font-family: inherit; letter-spacing: inherit; cursor: pointer; }
+.fb .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* Sidebar */
+.fb-side {
+  width: 232px;
+  flex: 0 0 232px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-3) var(--s-3) var(--s-3);
+}
+.fb-side__brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px 16px;
+}
+.fb-side__logo {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: var(--text);
+  color: var(--bg);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 11px; letter-spacing: 0;
+  font-family: var(--font-mono);
+}
+.fb-side__brand-name {
+  font-weight: 600; font-size: var(--t-md); letter-spacing: var(--letter-tight);
+}
+.fb-side__brand-sub { font-size: var(--t-xs); color: var(--text-3); }
+
+.fb-side__group {
+  margin-top: 8px;
+  padding: 0 6px 4px;
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-3); font-weight: 500;
+}
+
+.fb-side__nav { display: flex; flex-direction: column; gap: 1px; }
+.fb-side__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 8px;
+  border-radius: var(--r-md);
+  color: var(--text-2);
+  font-size: var(--t-base);
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 0; text-align: left; width: 100%;
+  transition: background .12s, color .12s;
+}
+.fb-side__item:hover { background: var(--bg-soft); color: var(--text); }
+.fb-side__item.is-active { background: var(--bg-soft); color: var(--text); }
+.fb-side__item .fb-ico { width: 16px; height: 16px; color: var(--text-3); }
+.fb-side__item.is-active .fb-ico { color: var(--accent); }
+.fb-side__kbd {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-4);
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.fb-side__balance {
+  margin-top: auto;
+  border-top: 1px solid var(--border-soft);
+  padding-top: var(--s-3);
+  margin-top: 8px;
+}
+.fb-side__balance-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 3px 6px;
+  font-size: var(--t-md);
+}
+.fb-side__balance-row .lbl { color: var(--text-3); }
+.fb-side__balance-row .val { font-weight: 500; }
+.fb-side__balance-row.total { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 8px; }
+.fb-side__balance-row.total .lbl { color: var(--text-2); font-weight: 500; }
+.fb-side__balance-row.total .val { font-weight: 600; font-size: var(--t-base); }
+
+/* Header */
+.fb-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.fb-head {
+  height: 52px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--header-bg);
+  display: flex; align-items: center;
+  padding: 0 var(--s-6);
+  gap: var(--s-4);
+}
+.fb-head__crumbs { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: var(--t-md); }
+.fb-head__crumbs .sep { color: var(--text-4); }
+.fb-head__crumbs .now { color: var(--text); font-weight: 500; }
+.fb-head__right { margin-left: auto; display: flex; align-items: center; gap: var(--s-2); }
+.fb-head__search {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-3); font-size: var(--t-md);
+  width: 240px;
+}
+.fb-head__search .fb-ico { width: 13px; height: 13px; }
+.fb-head__search .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-4); }
+
+/* Page */
+.fb-page { flex: 1; padding: var(--s-6) var(--s-7); overflow: auto; }
+.fb-page__head { display: flex; align-items: center; margin-bottom: var(--s-5); }
+.fb-page__title {
+  font-size: var(--t-2xl);
+  font-weight: 600;
+  letter-spacing: var(--letter-tighter);
+  margin: 0;
+}
+.fb-page__sub { font-size: var(--t-md); color: var(--text-3); margin-top: 2px; }
+.fb-page__actions { margin-left: auto; display: flex; gap: var(--s-2); }
+
+/* Buttons */
+.fb-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--t-md);
+  font-weight: 500;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.fb-btn:hover { background: var(--bg-soft); color: var(--text); }
+.fb-btn .fb-ico { width: 13px; height: 13px; }
+.fb-btn--ghost { background: transparent; border-color: transparent; color: var(--text-2); }
+.fb-btn--ghost:hover { background: var(--bg-soft); }
+.fb-btn--primary {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+.fb-btn--primary:hover { background: var(--text-2); border-color: var(--text-2); color: var(--bg); }
+.v-voltage .fb-btn--primary { background: var(--text); color: var(--bg); }
+.fb-btn--accent {
+  background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
+}
+.fb-btn--accent:hover { filter: brightness(1.05); color: var(--accent-fg); }
+.fb-btn--xs { height: 24px; padding: 0 8px; font-size: var(--t-sm); border-radius: var(--r-sm); }
+.fb-btn--icon { width: 30px; padding: 0; justify-content: center; }
+
+/* Cards */
+.fb-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.fb-card__head {
+  padding: 14px 16px 0;
+  display: flex; align-items: flex-start;
+}
+.fb-card__title {
+  font-size: var(--t-md); font-weight: 500; color: var(--text-2); margin: 0;
+}
+.fb-card__body { padding: 12px 16px 16px; }
+
+/* Stat */
+.fb-stat__label { font-size: var(--t-sm); color: var(--text-3); font-weight: 500; }
+.fb-stat__value {
+  font-size: var(--t-3xl);
+  font-weight: 600;
+  letter-spacing: var(--letter-tighter);
+  margin-top: 6px;
+  font-feature-settings: 'tnum';
+  font-variant-numeric: tabular-nums;
+}
+.fb-stat__delta { font-size: var(--t-sm); margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; }
+.fb-stat__delta.up { color: var(--pos); }
+.fb-stat__delta.down { color: var(--neg); }
+.fb-stat__delta .dim { color: var(--text-3); }
+
+/* Table */
+.fb-table { width: 100%; border-collapse: collapse; font-size: var(--t-md); }
+.fb-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--t-sm);
+  color: var(--text-3);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.fb-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.fb-table tr:hover td { background: var(--bg-soft); }
+.fb-table tr:last-child td { border-bottom: 0; }
+.fb-table .actions { text-align: right; opacity: 0; transition: opacity .12s; }
+.fb-table tr:hover .actions { opacity: 1; }
+.fb-table td.amount { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); font-weight: 500; }
+.fb-table td.amount.pos { color: var(--pos); }
+.fb-table td.amount.neg { color: var(--text); }
+
+/* Pills / Tags */
+.fb-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 20px; padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 11px; font-weight: 500;
+}
+.fb-pill .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; opacity: 0.6; }
+.fb-pill--pos { color: var(--pos); border-color: color-mix(in oklch, var(--pos) 25%, var(--border)); background: var(--pos-soft); }
+.fb-pill--neg { color: var(--neg); border-color: color-mix(in oklch, var(--neg) 25%, var(--border)); background: var(--neg-soft); }
+.fb-pill--warn { color: var(--warn); border-color: color-mix(in oklch, var(--warn) 25%, var(--border)); background: var(--warn-soft); }
+.fb-pill--accent { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+.fb-pill--plain { color: var(--text-3); }
+
+/* Filter chip */
+.fb-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2); font-size: var(--t-md);
+  font-weight: 500;
+}
+.fb-chip:hover { background: var(--bg-soft); }
+.fb-chip.is-active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Progress bars */
+.fb-bar { height: 6px; background: var(--bg-soft); border-radius: 999px; overflow: hidden; }
+.fb-bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.fb-bar.warn > i { background: var(--warn); }
+.fb-bar.neg > i { background: var(--neg); }
+.fb-bar.pos > i { background: var(--pos); }
+
+/* Modal/Dialog */
+.fb-modal-shade {
+  position: absolute; inset: 0;
+  background: color-mix(in oklch, var(--text) 35%, transparent);
+  backdrop-filter: blur(2px);
+  display: grid; place-items: center;
+}
+.v-obsidian.dark .fb-modal-shade,
+.v-voltage.dark .fb-modal-shade,
+.v-riverstone.dark .fb-modal-shade { background: rgba(0,0,0,.55); }
+
+.fb-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 0 0 1px var(--border);
+  width: 480px;
+  overflow: hidden;
+}
+.fb-modal__head {
+  padding: 16px 20px 4px;
+  display: flex; align-items: flex-start;
+}
+.fb-modal__title { font-size: var(--t-lg); font-weight: 600; letter-spacing: var(--letter-tight); margin: 0; }
+.fb-modal__sub { color: var(--text-3); font-size: var(--t-md); margin-top: 2px; }
+.fb-modal__x { margin-left: auto; }
+.fb-modal__body { padding: 12px 20px 8px; }
+.fb-modal__foot {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border-soft);
+  margin-top: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Form */
+.fb-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.fb-field__label { font-size: var(--t-sm); color: var(--text-2); font-weight: 500; }
+.fb-input, .fb-select {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-size: var(--t-md);
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+.fb-input:focus, .fb-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+}
+.fb-input::placeholder { color: var(--text-4); }
+
+.fb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Segmented */
+.fb-seg {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  font-size: var(--t-sm);
+}
+.fb-seg button {
+  height: 24px;
+  padding: 0 10px;
+  border: 0; background: transparent;
+  color: var(--text-3); font-weight: 500;
+  border-radius: calc(var(--radius) - 2px);
+}
+.fb-seg button.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Section header */
+.fb-grid { display: grid; gap: var(--s-4); }
+.fb-grid--4 { grid-template-columns: repeat(4, 1fr); }
+.fb-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.fb-grid--2 { grid-template-columns: repeat(2, 1fr); }
+
+/* Variation-specific tweaks */
+
+/* Obsidian: tighter, denser */
+.v-obsidian .fb-card { border-radius: var(--r-md); }
+.v-obsidian .fb-page { padding: var(--s-5) var(--s-6); }
+.v-obsidian .fb-stat__value { font-size: 28px; }
+
+/* Riverstone: more breathing, larger radius */
+.v-riverstone .fb-card { border-radius: var(--r-lg); }
+.v-riverstone .fb-page { padding: var(--s-7) var(--s-8); }
+.v-riverstone .fb-page__title { font-size: var(--t-3xl); font-weight: 500; }
+.v-riverstone .fb-stat__value { font-size: 34px; font-weight: 500; }
+.v-riverstone .fb-side { width: 244px; flex: 0 0 244px; }
+.v-riverstone .fb-head { border-bottom: 0; }
+
+/* Voltage: high contrast, hard edges */
+.v-voltage .fb-card { border-radius: var(--r-sm); }
+.v-voltage .fb-btn { border-radius: var(--r-sm); }
+.v-voltage .fb-chip { border-radius: var(--r-sm); }
+.v-voltage .fb-pill { border-radius: 3px; }
+.v-voltage .fb-page__title { font-weight: 600; letter-spacing: -0.04em; }
+.v-voltage .fb-stat__value { font-weight: 600; }
+
+/* Modal positioned absolute container */
+.fb-stage { position: relative; overflow: hidden; }
+
+/* Dot indicator */
+.fb-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--text-4); display: inline-block; }
+.fb-dot.cat-1 { background: oklch(0.62 0.16 268); }
+.fb-dot.cat-2 { background: oklch(0.7 0.13 165); }
+.fb-dot.cat-3 { background: oklch(0.72 0.14 60); }
+.fb-dot.cat-4 { background: oklch(0.6 0.16 25); }
+.fb-dot.cat-5 { background: oklch(0.6 0.12 320); }
+.fb-dot.cat-6 { background: oklch(0.65 0.1 200); }
+.fb-dot.cat-7 { background: oklch(0.55 0.05 60); }

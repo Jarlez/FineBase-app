@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardPage from '../pages/DashboardPage.vue'
 import ExpensesPage from '../pages/ExpensesPage.vue'
 import IncomesPage from '../pages/IncomesPage.vue'
+import RecurringPage from '../pages/RecurringPage.vue'
 
 const routes = [
   {
@@ -22,6 +23,11 @@ const routes = [
     path: '/entradas',
     name: 'incomes',
     component: IncomesPage,
+  },
+  {
+    path: '/recorrentes',
+    name: 'recurring',
+    component: RecurringPage,
   },
 ]
 

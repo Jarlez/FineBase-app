@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <title>FineBase — Visual Rework</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="tokens.css"/>
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body { background: #f0eee9; }
+    /* Make app frames in artboards reflect their fixed pixel size */
+    .fb-stage { width: 100%; height: 100%; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="app/icons.jsx"></script>
+  <script type="text/babel" src="app/charts.jsx"></script>
+  <script type="text/babel" src="app/data.jsx"></script>
+  <script type="text/babel" src="app/shell.jsx"></script>
+  <script type="text/babel" src="app/screens.jsx"></script>
+  <script type="text/babel" src="app/app.jsx"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ─── Color swatch helpers ───────────────────────────────────────
+    function PaletteCard({ variant, name, accentLabel, bullets }) {
+      const tone = (key, label) => (
+        <div style={{ display:'flex', alignItems:'center', gap: 10, padding:'8px 10px', borderTop: '1px solid var(--border-soft)' }}>
+          <span style={{ width: 18, height: 18, borderRadius: 4, background: `var(--${key})`, border: '1px solid var(--border-soft)' }}/>
+          <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>{label}</span>
+          <span className="num" style={{ marginLeft:'auto', fontSize: 11, color: 'var(--text-3)' }}>--{key}</span>
+        </div>
+      );
+      return (
+        <div className={'fb v-' + variant} style={{ height: 100 + '%', display:'block' }}>
+          <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius: 'var(--radius)', overflow:'hidden', height:'100%', display:'flex', flexDirection:'column' }}>
+            <div style={{ padding: 18, borderBottom: '1px solid var(--border-soft)' }}>
+              <div style={{ fontSize: 11, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight: 500 }}>Variação</div>
+              <div style={{ fontSize: 20, fontWeight: 600, letterSpacing:'var(--letter-tighter)', marginTop: 4, color:'var(--text)' }}>{name}</div>
+              <div style={{ fontSize: 12, color:'var(--text-3)', marginTop: 4 }}>{accentLabel}</div>
+              <div style={{ marginTop: 14, display:'flex', gap: 6 }}>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background:'var(--accent)', border:'1px solid var(--border-soft)' }}/>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background:'var(--text)', border:'1px solid var(--border-soft)' }}/>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background:'var(--bg)', border:'1px solid var(--border)' }}/>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background:'var(--surface)', border:'1px solid var(--border)' }}/>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              {tone('bg', 'Background')}
+              {tone('surface', 'Surface')}
+              {tone('border', 'Border')}
+              {tone('text', 'Text · primary')}
+              {tone('text-3', 'Text · muted')}
+              {tone('accent', 'Accent')}
+              {tone('pos', 'Positive')}
+              {tone('neg', 'Negative')}
+            </div>
+            <div style={{ padding: 14, borderTop:'1px solid var(--border-soft)', background:'var(--bg-soft)' }}>
+              {bullets.map((b, i) => (
+                <div key={i} style={{ fontSize: 11.5, color:'var(--text-2)', marginBottom: 4, display:'flex', gap: 6 }}>
+                  <span style={{ color: 'var(--accent)' }}>—</span>
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function TypeCard() {
+      return (
+        <div className="fb v-obsidian" style={{ background: 'var(--bg)', height: '100%', overflow: 'hidden' }}>
+          <div style={{ padding: 32, display:'flex', flexDirection:'column', gap: 26, height:'100%' }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight: 500 }}>Tipografia</div>
+              <div style={{ fontSize: 28, fontWeight: 600, letterSpacing:'-0.03em', marginTop: 4 }}>Geist · Geist Mono</div>
+              <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>UI sans + tabular monospace para números</div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'80px 1fr', rowGap: 14, columnGap: 16, alignItems:'baseline' }}>
+              {[
+                { label: '44/700', tag: 'Display',  text: 'R$ 8.313,42', mono: true, weight: 600, size: 44, ls: '-0.034em' },
+                { label: '32/600', tag: 'Title',    text: 'Dashboard',  weight: 600, size: 32, ls: '-0.026em' },
+                { label: '20/600', tag: 'Heading',  text: 'Gastos por categoria', weight: 600, size: 20, ls: '-0.018em' },
+                { label: '14/500', tag: 'Body',     text: 'Compras, restaurantes e contas do mês', weight: 500, size: 14 },
+                { label: '12/500', tag: 'Caption',  text: 'atualizado há 2 min', weight: 500, size: 12, color: 'var(--text-3)' },
+                { label: '11/500', tag: 'Label',    text: 'TOTAL NO PERÍODO', weight: 500, size: 11, ls: '0.06em', upper: true, color: 'var(--text-3)' },
+                { label: '13 mono', tag: 'Numeric', text: 'R$ 1.620,40', mono: true, size: 13, ls: '-0.01em' },
+              ].map((r, i) => (
+                <React.Fragment key={i}>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily:'var(--font-mono)' }}>{r.label}</div>
+                  <div style={{
+                    fontFamily: r.mono ? 'var(--font-mono)' : 'var(--font-sans)',
+                    fontWeight: r.weight || 500,
+                    fontSize: r.size,
+                    letterSpacing: r.ls || 0,
+                    textTransform: r.upper ? 'uppercase' : 'none',
+                    color: r.color || 'var(--text)',
+                  }}>
+                    {r.text}
+                    <span style={{ marginLeft: 12, fontSize: 11, color: 'var(--text-4)', fontFamily:'var(--font-mono)', textTransform:'none', letterSpacing: 0, fontWeight: 400 }}>{r.tag}</span>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ComponentsCard({ variant }) {
+      return (
+        <div className={'fb v-' + variant} style={{ background: 'var(--bg)', height: '100%', padding: 24, overflow:'hidden' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight: 500, marginBottom: 12 }}>Componentes · {variant}</div>
+          <div style={{ display:'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+            {/* Buttons */}
+            <div>
+              <div style={{ fontSize: 12, color:'var(--text-3)', marginBottom: 8 }}>Botões</div>
+              <div style={{ display:'flex', gap: 8, flexWrap:'wrap', alignItems:'center' }}>
+                <button className="fb-btn fb-btn--primary">Salvar</button>
+                <button className="fb-btn">Cancelar</button>
+                <button className="fb-btn fb-btn--ghost">Exportar</button>
+                <button className="fb-btn fb-btn--accent">Adicionar</button>
+              </div>
+            </div>
+            {/* Pills */}
+            <div>
+              <div style={{ fontSize: 12, color:'var(--text-3)', marginBottom: 8 }}>Pills</div>
+              <div style={{ display:'flex', gap: 6, flexWrap:'wrap' }}>
+                <span className="fb-pill fb-pill--pos">+12,4%</span>
+                <span className="fb-pill fb-pill--neg">−R$ 240</span>
+                <span className="fb-pill fb-pill--warn">85% do orçamento</span>
+                <span className="fb-pill fb-pill--accent">Parcelado</span>
+                <span className="fb-pill fb-pill--plain">Variável</span>
+              </div>
+            </div>
+            {/* Bars */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 12, color:'var(--text-3)', marginBottom: 8 }}>Progresso</div>
+              <div style={{ display:'flex', flexDirection:'column', gap: 10 }}>
+                <div className="fb-bar pos"><i style={{ width: '32%' }}/></div>
+                <div className="fb-bar warn"><i style={{ width: '78%' }}/></div>
+                <div className="fb-bar neg"><i style={{ width: '112%' }}/></div>
+              </div>
+            </div>
+            {/* Inputs */}
+            <div>
+              <div style={{ fontSize: 12, color:'var(--text-3)', marginBottom: 8 }}>Inputs</div>
+              <input className="fb-input" defaultValue="Pão de Açúcar" style={{ width:'100%', marginBottom: 8 }}/>
+              <select className="fb-select" style={{ width: '100%' }}>
+                <option>Mercado</option>
+              </select>
+            </div>
+            {/* Stat */}
+            <div>
+              <div style={{ fontSize: 12, color:'var(--text-3)', marginBottom: 8 }}>Stat card</div>
+              <div className="fb-card">
+                <div className="fb-card__body" style={{ paddingTop: 12 }}>
+                  <div className="fb-stat__label">Saldo · Maio</div>
+                  <div className="fb-stat__value" style={{ fontSize: 22 }}>R$ 8.313,42</div>
+                  <div style={{ marginTop: 6 }}><span className="fb-pill fb-pill--pos">+16,3%</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Interactive frame state ────────────────────────────────────
+    function StatefulFrame({ variant, theme = 'light' }) {
+      const [screen, setScreen] = useState('dashboard');
+      const [modal, setModal] = useState(false);
+      const [t, setT] = useState(theme);
+      return (
+        <AppFrame
+          variant={variant}
+          theme={t}
+          screen={screen}
+          modal={modal}
+          onNav={setScreen}
+          onAdd={() => setModal(true)}
+          onCloseModal={() => setModal(false)}
+          onToggleTheme={() => setT(t === 'dark' ? 'light' : 'dark')}
+        />
+      );
+    }
+
+    function StaticFrame({ variant, theme = 'light', screen = 'dashboard', modal = false }) {
+      return (
+        <AppFrame
+          variant={variant}
+          theme={theme}
+          screen={screen}
+          modal={modal}
+        />
+      );
+    }
+
+    // ─── App ─────────────────────────────────────────────────────────
+    function App() {
+      return (
+        <DesignCanvas
+          title="FineBase · Rework Visual"
+          subtitle="Três direções minimalistas · light + dark · estilo Linear / Mercury / Vercel"
+        >
+          {/* SYSTEM */}
+          <DCSection id="system" title="01 · Sistema" subtitle="Paletas, tipografia, componentes — base para todas as variações.">
+            <DCArtboard id="pal-obsidian"   label="Obsidian · paleta"   width={360} height={680}>
+              <PaletteCard variant="obsidian" name="Obsidian"
+                accentLabel="Indigo discreto · estilo Linear"
+                bullets={['Bordas finas (1px)','Cards baixa-elevação','Hover com bg-soft','Densidade alta']}/>
+            </DCArtboard>
+            <DCArtboard id="pal-river"      label="Riverstone · paleta" width={360} height={680}>
+              <PaletteCard variant="riverstone" name="Riverstone"
+                accentLabel="Sage / teal sóbrio · estilo Mercury"
+                bullets={['Tons quentes (warm gray)','Border-radius maior','Sem header sólido','Densidade equilibrada']}/>
+            </DCArtboard>
+            <DCArtboard id="pal-voltage"    label="Voltage · paleta"    width={360} height={680}>
+              <PaletteCard variant="voltage" name="Voltage"
+                accentLabel="Quase-preto + amber elétrico · estilo Vercel"
+                bullets={['Contraste máximo','Bordas hard (4px radius)','Accent geométrico','Tipografia fechada']}/>
+            </DCArtboard>
+            <DCArtboard id="type"           label="Tipografia"          width={560} height={680}>
+              <TypeCard/>
+            </DCArtboard>
+            <DCArtboard id="comp-obsidian"  label="Componentes · Obsidian" width={520} height={420}>
+              <ComponentsCard variant="obsidian"/>
+            </DCArtboard>
+            <DCArtboard id="comp-river"     label="Componentes · Riverstone" width={520} height={420}>
+              <ComponentsCard variant="riverstone"/>
+            </DCArtboard>
+            <DCArtboard id="comp-voltage"   label="Componentes · Voltage" width={520} height={420}>
+              <ComponentsCard variant="voltage"/>
+            </DCArtboard>
+          </DCSection>
+
+          {/* VARIAÇÃO A — OBSIDIAN */}
+          <DCSection id="obsidian"
+            title="02 · Obsidian — denso, monocromático"
+            subtitle="Linear-inspired · indigo discreto · 6px radius · zebra ausente · ações no hover">
+            <DCArtboard id="obs-dash" label="Dashboard · light" width={1280} height={820}>
+              <StatefulFrame variant="obsidian" theme="light"/>
+            </DCArtboard>
+            <DCArtboard id="obs-dash-dark" label="Dashboard · dark" width={1280} height={820}>
+              <StatefulFrame variant="obsidian" theme="dark"/>
+            </DCArtboard>
+            <DCArtboard id="obs-gastos" label="Gastos · tabela + filtros" width={1280} height={820}>
+              <StaticFrame variant="obsidian" theme="light" screen="gastos"/>
+            </DCArtboard>
+            <DCArtboard id="obs-modal" label="Adicionar gasto · modal" width={1280} height={820}>
+              <StaticFrame variant="obsidian" theme="light" screen="gastos" modal={true}/>
+            </DCArtboard>
+            <DCArtboard id="obs-entradas" label="Entradas" width={1280} height={820}>
+              <StaticFrame variant="obsidian" theme="light" screen="entradas"/>
+            </DCArtboard>
+          </DCSection>
+
+          {/* VARIAÇÃO B — RIVERSTONE */}
+          <DCSection id="riverstone"
+            title="03 · Riverstone — quente, espaçado, refinado"
+            subtitle="Mercury-inspired · sage/teal · 10px radius · header transparente · tipografia menos pesada">
+            <DCArtboard id="riv-dash" label="Dashboard · light" width={1280} height={820}>
+              <StatefulFrame variant="riverstone" theme="light"/>
+            </DCArtboard>
+            <DCArtboard id="riv-dash-dark" label="Dashboard · dark" width={1280} height={820}>
+              <StatefulFrame variant="riverstone" theme="dark"/>
+            </DCArtboard>
+            <DCArtboard id="riv-gastos" label="Gastos · tabela + filtros" width={1280} height={820}>
+              <StaticFrame variant="riverstone" theme="light" screen="gastos"/>
+            </DCArtboard>
+            <DCArtboard id="riv-modal" label="Adicionar gasto · modal" width={1280} height={820}>
+              <StaticFrame variant="riverstone" theme="light" screen="gastos" modal={true}/>
+            </DCArtboard>
+            <DCArtboard id="riv-entradas" label="Entradas" width={1280} height={820}>
+              <StaticFrame variant="riverstone" theme="light" screen="entradas"/>
+            </DCArtboard>
+          </DCSection>
+
+          {/* VARIAÇÃO C — VOLTAGE */}
+          <DCSection id="voltage"
+            title="04 · Voltage — quase-preto + 1 toque elétrico"
+            subtitle="Vercel-inspired · amber accent · 4px radius · contraste máximo · tipografia fechada">
+            <DCArtboard id="vol-dash" label="Dashboard · light" width={1280} height={820}>
+              <StatefulFrame variant="voltage" theme="light"/>
+            </DCArtboard>
+            <DCArtboard id="vol-dash-dark" label="Dashboard · dark" width={1280} height={820}>
+              <StatefulFrame variant="voltage" theme="dark"/>
+            </DCArtboard>
+            <DCArtboard id="vol-gastos" label="Gastos · tabela + filtros" width={1280} height={820}>
+              <StaticFrame variant="voltage" theme="dark" screen="gastos"/>
+            </DCArtboard>
+            <DCArtboard id="vol-modal" label="Adicionar gasto · modal" width={1280} height={820}>
+              <StaticFrame variant="voltage" theme="dark" screen="gastos" modal={true}/>
+            </DCArtboard>
+            <DCArtboard id="vol-entradas" label="Entradas" width={1280} height={820}>
+              <StaticFrame variant="voltage" theme="light" screen="entradas"/>
+            </DCArtboard>
+          </DCSection>
+
+          {/* PROTOTYPE */}
+          <DCSection id="prototype"
+            title="05 · Protótipo navegável"
+            subtitle="Clique nas abas do menu, abra modais, alterne tema e variação. Os mesmos componentes acima, em uso real.">
+            <DCArtboard id="proto" label="Protótipo interativo" width={1280} height={820}>
+              <iframe src="prototype.html" style={{ width:'100%', height:'100%', border: 0, display:'block' }}/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCPostIt x={40} y={20} width={260}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Como ler isso</div>
+            <div style={{ fontSize: 12, lineHeight: 1.45 }}>
+              Cada artboard é uma direção. Os itens do menu lateral nos artboards <b>Dashboard</b> são <b>clicáveis</b> — troca de tela ao vivo. Modais também abrem.
+              <br/><br/>
+              Use o ícone 🔍 no canto superior direito de cada card para abrir em tela cheia.
+            </div>
+          </DCPostIt>
+
+          <DCPostIt x={1340} y={20} width={240}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Recomendação</div>
+            <div style={{ fontSize: 12, lineHeight: 1.45 }}>
+              <b>Obsidian</b> é a aposta mais segura e produtiva — combina com perfil "casal pragmático monitorando finanças". Riverstone é mais elegante e calmo. Voltage é o mais ousado.
+            </div>
+          </DCPostIt>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>

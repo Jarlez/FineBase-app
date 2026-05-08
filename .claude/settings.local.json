@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s /b)",
+      "Bash(Get-ChildItem -Recurse -Path .)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "mcp__obsidian__get_workspace_files",
+      "mcp__obsidian__create",
+      "Bash(npm run *)",
+      "mcp__obsidian__str_replace",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__obsidian__view"
+    ]
+  }
+}

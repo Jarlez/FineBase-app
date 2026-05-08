@@ -109,3 +109,65 @@ export async function deleteIncome(id) {
   }
 }
 
+const BUDGETS_TABLE = 'budgets'
+const RECURRING_TABLE = 'recurring_templates'
+
+export async function fetchBudgets() {
+  const { data, error } = await supabase
+    .from(BUDGETS_TABLE)
+    .select('*')
+    .order('category')
+  if (error) throw error
+  return data || []
+}
+
+export async function upsertBudget(category, limit_amount) {
+  const { data, error } = await supabase
+    .from(BUDGETS_TABLE)
+    .upsert({ category, limit_amount }, { onConflict: 'category' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteBudget(id) {
+  const { error } = await supabase.from(BUDGETS_TABLE).delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function fetchRecurringTemplates() {
+  const { data, error } = await supabase
+    .from(RECURRING_TABLE)
+    .select('*')
+    .order('description')
+  if (error) throw error
+  return data || []
+}
+
+export async function createRecurringTemplate(payload) {
+  const { data, error } = await supabase
+    .from(RECURRING_TABLE)
+    .insert(payload)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateRecurringTemplate(id, payload) {
+  const { data, error } = await supabase
+    .from(RECURRING_TABLE)
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteRecurringTemplate(id) {
+  const { error } = await supabase.from(RECURRING_TABLE).delete().eq('id', id)
+  if (error) throw error
+}
+

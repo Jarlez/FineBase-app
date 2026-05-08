@@ -106,7 +106,7 @@
       @update:preset="filterPreset = $event"
     />
 
-    <div class="row q-col-gutter-md q-mb-md stat-cards">
+    <div v-if="!isInitialLoading" class="row q-col-gutter-md q-mb-md stat-cards">
       <div class="col-12 col-sm-6 col-md-4">
         <q-card class="stat-card stat-card--expense">
           <q-card-section class="stat-card__content">
@@ -173,7 +173,27 @@
       </q-card-section>
     </q-card>
 
+    <!-- Skeleton de carregamento inicial -->
+    <template v-if="isInitialLoading">
+      <div class="row q-col-gutter-md q-mb-md">
+        <div v-for="n in 3" :key="n" class="col-12 col-sm-6 col-md-4">
+          <q-card flat class="stat-card">
+            <q-card-section class="stat-card__content">
+              <q-skeleton type="rect" width="48px" height="48px" style="border-radius: 12px; flex-shrink: 0" />
+              <div class="stat-card__body">
+                <q-skeleton type="text" width="60%" />
+                <q-skeleton type="text" width="80%" height="20px" class="q-mt-xs" />
+                <q-skeleton type="text" width="50%" class="q-mt-xs" />
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+      <q-skeleton type="rect" height="300px" style="border-radius: 12px" />
+    </template>
+
     <q-table
+      v-else
       class="table-incomes"
       table-header-class="bg-primary text-white"
       table-class="bg-white text-black"
@@ -186,12 +206,17 @@
       hide-pagination
       wrap-cells
       clickable
-      hide-bottom
       :rows="filteredIncomes"
       :columns="columns"
       :rows-per-page-options="[0]"
-      no-data-label="Nenhuma entrada cadastrada."
     >
+          <template #no-data>
+            <div class="full-width column flex-center q-py-xl text-grey-5">
+              <q-icon name="savings" size="56px" color="grey-4" />
+              <p class="text-body1 text-grey-6 q-mt-sm q-mb-xs">Nenhuma entrada encontrada</p>
+              <p class="text-body2 text-grey-5 q-ma-none">Ajuste os filtros ou adicione uma nova entrada</p>
+            </div>
+          </template>
           <template #body-cell-detalhes="props">
             <q-td :props="props">
               <q-btn
@@ -461,9 +486,17 @@ const columns = [
   { name: 'actions', label: 'Ações', field: 'actions', align: 'center' },
 ]
 
+const getTodayDate = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const emptyForm = () => ({
   id: null,
-  date: '',
+  date: getTodayDate(),
   description: '',
   source: '',
   amount: null,
@@ -476,6 +509,7 @@ const detailsModalOpen = ref(false)
 const selectedIncomeForDetails = ref(null)
 
 const isEditing = computed(() => editingId.value !== null)
+const isInitialLoading = computed(() => finance.loading && finance.incomes.length === 0)
 
 const openDetailsModal = (row) => {
   selectedIncomeForDetails.value = row

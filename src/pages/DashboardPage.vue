@@ -9,6 +9,67 @@
       </p>
     </div>
 
+    <!-- Resumo do mês atual -->
+    <q-card flat class="current-month-card q-mb-lg rounded-borders">
+      <q-card-section class="q-pa-md">
+        <div class="row items-center justify-between q-mb-sm">
+          <div class="row items-center q-gutter-x-sm">
+            <q-icon name="calendar_today" color="primary" size="18px" />
+            <span class="text-subtitle2 text-weight-medium text-capitalize">{{ currentMonthName }}</span>
+          </div>
+          <q-badge
+            :color="currentMonthBalance >= 0 ? 'positive' : 'negative'"
+            :label="currentMonthBalance >= 0 ? 'No azul' : 'No vermelho'"
+            rounded
+          />
+        </div>
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-sm-3">
+            <div class="text-caption text-grey-6">Entradas</div>
+            <div class="text-h6 text-weight-bold text-positive">{{ formatMoney(currentMonthIncomes) }}</div>
+          </div>
+          <div class="col-12 col-sm-3">
+            <div class="text-caption text-grey-6">Gastos</div>
+            <div class="text-h6 text-weight-bold text-negative">{{ formatMoney(currentMonthExpenses) }}</div>
+          </div>
+          <div class="col-12 col-sm-3">
+            <div class="text-caption text-grey-6">Saldo</div>
+            <div
+              class="text-h6 text-weight-bold"
+              :class="currentMonthBalance >= 0 ? 'text-positive' : 'text-negative'"
+            >
+              {{ formatMoney(currentMonthBalance) }}
+            </div>
+          </div>
+          <div class="col-12 col-sm-3">
+            <div class="text-caption text-grey-6">Maior categoria</div>
+            <div class="text-subtitle1 text-weight-bold text-grey-8 ellipsis">
+              {{ currentMonthTopCategory ? currentMonthTopCategory[0] : '–' }}
+            </div>
+            <div v-if="currentMonthTopCategory" class="text-caption text-grey-5">
+              {{ formatMoney(currentMonthTopCategory[1]) }}
+            </div>
+          </div>
+        </div>
+        <div v-if="currentMonthSavingsRate !== null" class="q-mt-sm">
+          <div class="row items-center justify-between q-mb-xs">
+            <span class="text-caption text-grey-6">Taxa de economia</span>
+            <span
+              class="text-caption text-weight-medium"
+              :class="currentMonthSavingsRate >= 0 ? 'text-positive' : 'text-negative'"
+            >{{ currentMonthSavingsRate }}%</span>
+          </div>
+          <q-linear-progress
+            :value="Math.min(Math.abs(currentMonthSavingsRate) / 100, 1)"
+            :color="currentMonthSavingsRate >= 0 ? 'positive' : 'negative'"
+            rounded
+            size="6px"
+            style="background: #e2e8f0"
+          />
+        </div>
+      </q-card-section>
+    </q-card>
+
     <div class="row q-col-gutter-md q-mb-lg">
       <div class="col-12">
         <q-card flat class="dashboard-card rounded-borders">
@@ -182,6 +243,91 @@
       </div>
     </div>
 
+    <!-- Parcelamentos em andamento -->
+    <div class="row q-col-gutter-md q-mb-lg">
+      <div class="col-12">
+        <q-card flat class="dashboard-card rounded-borders">
+          <q-card-section>
+            <div class="row items-center q-mb-sm">
+              <q-icon name="credit_card" color="primary" size="18px" class="q-mr-xs" />
+              <span class="text-subtitle2 text-weight-medium text-grey-7">Parcelamentos em andamento</span>
+              <q-badge v-if="activeInstallments.length" :label="activeInstallments.length" color="primary" rounded class="q-ml-sm" />
+            </div>
+            <div v-if="!activeInstallments.length" class="text-caption text-grey-5 q-py-md text-center">
+              Nenhum parcelamento em andamento
+            </div>
+            <div v-else class="row q-col-gutter-sm">
+              <div v-for="item in activeInstallments" :key="item.id" class="col-12 col-sm-6 col-md-4">
+                <div class="installment-card q-pa-sm">
+                  <div class="row items-center justify-between q-mb-xs">
+                    <span class="text-caption text-weight-medium ellipsis" style="max-width: 70%">{{ item.description }}</span>
+                    <q-badge outline color="primary" :label="`${item.currentInstallment}/${item.totalInstallments}`" />
+                  </div>
+                  <div class="text-subtitle2 text-weight-bold text-negative">
+                    {{ formatMoney(item.amount) }}<span class="text-caption text-grey-5">/mês</span>
+                  </div>
+                  <div class="text-caption text-grey-5 q-mt-xs">
+                    Término: <strong>{{ formatInstallmentDate(item.endDate) }}</strong>
+                    · Restante: {{ formatMoney(item.totalRemaining) }}
+                  </div>
+                  <q-linear-progress
+                    :value="item.currentInstallment / item.totalInstallments"
+                    color="primary"
+                    rounded
+                    size="4px"
+                    style="background: #e2e8f0; margin-top: 8px"
+                  />
+                </div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
+    <!-- Orçamento por categoria -->
+    <div class="row q-col-gutter-md q-mb-lg">
+      <div class="col-12">
+        <q-card flat class="dashboard-card rounded-borders">
+          <q-card-section>
+            <div class="row items-center justify-between q-mb-sm">
+              <div class="row items-center">
+                <q-icon name="savings" color="warning" size="18px" class="q-mr-xs" />
+                <span class="text-subtitle2 text-weight-medium text-grey-7">Orçamento por categoria — {{ currentMonthName }}</span>
+              </div>
+              <q-btn flat dense no-caps size="sm" icon="settings" color="grey-6" label="Gerenciar" @click="budgetDialogOpen = true" />
+            </div>
+            <div v-if="!finance.budgets.length" class="text-caption text-grey-5 q-py-md text-center">
+              Nenhum orçamento configurado.
+              <q-btn flat dense no-caps size="sm" color="primary" label="Configurar agora" @click="budgetDialogOpen = true" />
+            </div>
+            <div v-else class="row q-col-gutter-md">
+              <div v-for="b in budgetStatus" :key="b.id" class="col-12 col-sm-6 col-md-4">
+                <div class="budget-item q-pa-sm">
+                  <div class="row items-center justify-between q-mb-xs">
+                    <span class="text-caption text-weight-medium">{{ b.category }}</span>
+                    <span class="text-caption" :class="b.exceeded ? 'text-negative text-weight-bold' : 'text-grey-6'">
+                      {{ formatMoney(b.spent) }} / {{ formatMoney(b.limit_amount) }}
+                    </span>
+                  </div>
+                  <q-linear-progress
+                    :value="Math.min(b.pct / 100, 1)"
+                    :color="b.color"
+                    rounded
+                    size="8px"
+                    style="background: #e2e8f0"
+                  />
+                  <div v-if="b.exceeded" class="text-caption text-negative q-mt-xs">
+                    Excedido em {{ formatMoney(b.spent - b.limit_amount) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
     <div class="row items-center q-mb-md q-gutter-sm">
       <span class="text-body2 text-grey-7">Modo de visualização:</span>
       <q-btn
@@ -295,6 +441,20 @@
         </q-card>
       </div>
     </div>
+
+    <div class="row q-col-gutter-md q-mt-md">
+      <div class="col-12">
+        <q-card flat class="dashboard-card dashboard-card--chart rounded-borders">
+          <q-card-section class="q-pb-none">
+            <div class="stat-card__label">Tendência dos últimos 12 meses</div>
+            <div class="text-caption text-grey-5 q-mt-xs">Evolução mensal de gastos e entradas</div>
+          </q-card-section>
+          <q-card-section class="dashboard-card__chart-section dashboard-card__chart-section--wide">
+            <Line :data="trendChartData" :options="lineOptions" />
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
     </template>
 
     <template v-else>
@@ -347,6 +507,71 @@
       </div>
     </div>
     </template>
+    <!-- Dialog gerenciar orçamentos -->
+    <q-dialog v-model="budgetDialogOpen">
+      <q-card style="min-width: 380px; max-width: 500px" class="rounded-borders">
+        <q-card-section class="row items-center q-py-sm bg-primary">
+          <div class="text-h6 text-white">Gerenciar orçamentos</div>
+          <q-space />
+          <q-btn icon="close" flat class="text-white" round dense v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <div class="text-caption text-grey-6 q-mb-md">
+            Defina um limite mensal por categoria. O dashboard mostra a barra de progresso e alerta quando excedido.
+          </div>
+          <div class="row q-col-gutter-sm q-mb-md items-end">
+            <div class="col-12 col-sm-6">
+              <q-select
+                v-model="budgetForm.category"
+                :options="budgetCategoryOptions"
+                label="Categoria"
+                dense
+                outlined
+                emit-value
+                map-options
+                hide-bottom-space
+              />
+            </div>
+            <div class="col-8 col-sm-4">
+              <q-input
+                v-model.number="budgetForm.limit_amount"
+                type="number"
+                label="Limite (R$)"
+                dense
+                outlined
+                prefix="R$"
+                hide-bottom-space
+              />
+            </div>
+            <div class="col-4 col-sm-2">
+              <q-btn
+                unelevated
+                color="primary"
+                icon="save"
+                round
+                :loading="budgetSaving"
+                :disable="!budgetForm.category || !budgetForm.limit_amount"
+                @click="saveBudgetForm"
+              />
+            </div>
+          </div>
+          <q-list separator>
+            <q-item v-for="b in finance.budgets" :key="b.id" dense>
+              <q-item-section>
+                <q-item-label>{{ b.category }}</q-item-label>
+                <q-item-label caption>Limite: {{ formatMoney(b.limit_amount) }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-btn flat round dense icon="delete" color="negative" size="sm" @click="removeBudgetItem(b.id)" />
+              </q-item-section>
+            </q-item>
+            <q-item v-if="!finance.budgets.length">
+              <q-item-section class="text-caption text-grey-5 text-center">Nenhum orçamento configurado</q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -362,6 +587,26 @@ const finance = useFinanceStore();
 const now = new Date();
 const selectedMonths = ref([now.getMonth() + 1]);
 const selectedYear = ref(now.getFullYear());
+
+const currentMonth = now.getMonth() + 1
+const currentMonthName = now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
+
+const currentMonthIncomes = computed(() => finance.monthlyIncomesTotal(currentMonth, currentYear))
+const currentMonthExpenses = computed(() => finance.monthlyExpensesTotal(currentMonth, currentYear))
+const currentMonthBalance = computed(() => finance.balance(currentMonth, currentYear))
+
+const currentMonthTopCategory = computed(() => {
+  const cats = finance.expensesByCategory(currentMonth, currentYear)
+  const entries = Object.entries(cats)
+  if (!entries.length) return null
+  return entries.reduce((max, cur) => cur[1] > max[1] ? cur : max)
+})
+
+const currentMonthSavingsRate = computed(() => {
+  const inc = currentMonthIncomes.value
+  if (inc <= 0) return null
+  return Math.round((currentMonthBalance.value / inc) * 100)
+})
 const isRefreshing = ref(false);
 const viewMode = ref("charts"); // 'charts' | 'table'
 
@@ -928,6 +1173,144 @@ const lineOptions = {
   },
 };
 
+/** Tendência dos últimos 12 meses: gastos e entradas lado a lado. */
+const trendChartData = computed(() => {
+  const points = []
+  const labels = []
+  const ref = new Date()
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(ref.getFullYear(), ref.getMonth() - i, 1)
+    points.push({ year: d.getFullYear(), month: d.getMonth() + 1 })
+    labels.push(d.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }))
+  }
+
+  const expensesData = points.map(({ year, month }) =>
+    finance.expenses
+      .filter(e => { const p = parseDateParts(e.date); return p && p.year === year && p.month === month })
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0)
+  )
+
+  const incomesData = points.map(({ year, month }) =>
+    finance.incomes
+      .filter(i => { const p = parseDateParts(i.date); return p && p.year === year && p.month === month })
+      .reduce((sum, i) => sum + Number(i.amount || 0), 0)
+  )
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Gastos',
+        data: expensesData,
+        borderColor: '#dc2626',
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+      {
+        label: 'Entradas',
+        data: incomesData,
+        borderColor: '#059669',
+        backgroundColor: 'rgba(5, 150, 105, 0.08)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+    ],
+  }
+})
+
+// Parcelamentos em andamento
+function formatInstallmentDate(date) {
+  if (!date) return '–'
+  return date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+}
+
+const activeInstallments = computed(() => {
+  const now = new Date()
+  return finance.expenses
+    .filter((e) => e.expense_type === 'parcelado' && e.installments > 0)
+    .map((e) => {
+      const start = new Date(e.date)
+      const monthDiff =
+        (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
+      const currentInstallment = Math.max(1, monthDiff + 1)
+      const total = Number(e.installments)
+      const remaining = Math.max(0, total - currentInstallment)
+      const endDate = new Date(start.getFullYear(), start.getMonth() + total - 1, 1)
+      return {
+        ...e,
+        currentInstallment,
+        totalInstallments: total,
+        remaining,
+        endDate,
+        totalRemaining: (remaining + 1) * Number(e.amount),
+      }
+    })
+    .filter((e) => e.currentInstallment <= e.totalInstallments)
+    .sort((a, b) => a.remaining - b.remaining)
+})
+
+// Orçamentos por categoria
+const budgetStatus = computed(() => {
+  const m = new Date().getMonth() + 1
+  const y = new Date().getFullYear()
+  const byCat = finance.expensesByCategory(m, y)
+  return finance.budgets
+    .map((b) => {
+      const spent = byCat[b.category] || 0
+      const pct = b.limit_amount > 0 ? (spent / b.limit_amount) * 100 : 0
+      return {
+        ...b,
+        spent,
+        pct,
+        exceeded: spent > b.limit_amount,
+        color: pct >= 100 ? 'negative' : pct >= 80 ? 'warning' : 'positive',
+      }
+    })
+    .sort((a, b) => b.pct - a.pct)
+})
+
+const budgetDialogOpen = ref(false)
+const budgetSaving = ref(false)
+const budgetForm = ref({ category: null, limit_amount: null })
+
+const budgetCategoryOptions = [
+  { label: 'Assinaturas', value: 'Assinaturas' },
+  { label: 'Casa', value: 'Casa' },
+  { label: 'Compras', value: 'Compras' },
+  { label: 'Delivery', value: 'Delivery' },
+  { label: 'Doações', value: 'Doações' },
+  { label: 'Educação', value: 'Educação' },
+  { label: 'Empréstimos', value: 'Empréstimos' },
+  { label: 'Imprevistos', value: 'Imprevistos' },
+  { label: 'Investimentos', value: 'Investimentos' },
+  { label: 'Lazer', value: 'Lazer' },
+  { label: 'Reserva de emergência', value: 'Reserva de emergência' },
+  { label: 'Saúde', value: 'Saúde' },
+  { label: 'Supermercado', value: 'Supermercado' },
+  { label: 'Transporte', value: 'Transporte' },
+]
+
+async function saveBudgetForm() {
+  if (!budgetForm.value.category || !budgetForm.value.limit_amount) return
+  budgetSaving.value = true
+  try {
+    await finance.saveBudget(budgetForm.value.category, budgetForm.value.limit_amount)
+    budgetForm.value = { category: null, limit_amount: null }
+  } finally {
+    budgetSaving.value = false
+  }
+}
+
+async function removeBudgetItem(id) {
+  await finance.removeBudget(id)
+}
+
 onMounted(() => {
   if (!finance.expenses.length || !finance.incomes.length) {
     finance.loadData();
@@ -1072,6 +1455,10 @@ onMounted(() => {
   min-height: 280px;
 }
 
+.dashboard-card--chart .dashboard-card__chart-section--wide {
+  min-height: 220px;
+}
+
 .chart-pie-wrap {
   max-height: 240px;
   margin: 0 auto;
@@ -1102,5 +1489,22 @@ onMounted(() => {
 
 .dashboard-table :deep(thead th:first-child) {
   z-index: 3;
+}
+
+.current-month-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.installment-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.budget-item {
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
 }
 </style>

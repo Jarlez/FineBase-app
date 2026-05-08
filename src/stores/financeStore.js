@@ -8,6 +8,13 @@ import {
   createIncome,
   updateIncome,
   deleteIncome,
+  fetchBudgets,
+  upsertBudget,
+  deleteBudget,
+  fetchRecurringTemplates,
+  createRecurringTemplate,
+  updateRecurringTemplate,
+  deleteRecurringTemplate,
 } from '../services/financeService'
 
 function parseDate(dateString) {
@@ -20,6 +27,8 @@ export const useFinanceStore = defineStore('finance', {
   state: () => ({
     expenses: [],
     incomes: [],
+    budgets: [],
+    recurringTemplates: [],
     loading: false,
     error: null,
   }),
@@ -56,13 +65,30 @@ export const useFinanceStore = defineStore('finance', {
       }, 0)
     },
 
-    balance:
-      (state, getters) =>
-      (month, year) => {
-        const incomes = getters.monthlyIncomesTotal(month, year)
-        const expenses = getters.monthlyExpensesTotal(month, year)
-        return incomes - expenses
-      },
+    balance: (state) => (month, year) => {
+      const m = month || new Date().getMonth() + 1
+      const y = year || new Date().getFullYear()
+
+      const incomes = state.incomes.reduce((total, income) => {
+        const date = parseDate(income.date)
+        if (!date) return total
+        if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+          return total + Number(income.amount || 0)
+        }
+        return total
+      }, 0)
+
+      const expenses = state.expenses.reduce((total, expense) => {
+        const date = parseDate(expense.date)
+        if (!date) return total
+        if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+          return total + Number(expense.amount || 0)
+        }
+        return total
+      }, 0)
+
+      return incomes - expenses
+    },
 
     expensesByCategory: (state) => (month, year) => {
       const result = {}
@@ -146,12 +172,16 @@ export const useFinanceStore = defineStore('finance', {
       this.loading = true
       this.error = null
       try {
-        const [expenses, incomes] = await Promise.all([
+        const [expenses, incomes, budgets, recurringTemplates] = await Promise.all([
           fetchExpenses(),
           fetchIncomes(),
+          fetchBudgets(),
+          fetchRecurringTemplates(),
         ])
         this.expenses = expenses
         this.incomes = incomes
+        this.budgets = budgets
+        this.recurringTemplates = recurringTemplates
       } catch (err) {
         this.error = err.message || 'Erro ao carregar dados financeiros.'
       } finally {
@@ -243,6 +273,78 @@ export const useFinanceStore = defineStore('finance', {
         this.incomes = this.incomes.filter((item) => item.id !== id)
       } catch (err) {
         this.error = err.message || 'Erro ao excluir entrada.'
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async saveBudget(category, limit_amount) {
+      this.error = null
+      try {
+        const saved = await upsertBudget(category, limit_amount)
+        const index = this.budgets.findIndex((b) => b.category === category)
+        if (index !== -1) {
+          this.budgets.splice(index, 1, saved)
+        } else {
+          this.budgets.push(saved)
+          this.budgets.sort((a, b) => a.category.localeCompare(b.category))
+        }
+      } catch (err) {
+        this.error = err.message || 'Erro ao salvar orçamento.'
+        throw err
+      }
+    },
+
+    async removeBudget(id) {
+      this.error = null
+      try {
+        await deleteBudget(id)
+        this.budgets = this.budgets.filter((b) => b.id !== id)
+      } catch (err) {
+        this.error = err.message || 'Erro ao excluir orçamento.'
+        throw err
+      }
+    },
+
+    async addRecurringTemplate(payload) {
+      this.loading = true
+      this.error = null
+      try {
+        const created = await createRecurringTemplate(payload)
+        this.recurringTemplates.push(created)
+        this.recurringTemplates.sort((a, b) => a.description.localeCompare(b.description))
+      } catch (err) {
+        this.error = err.message || 'Erro ao adicionar template.'
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async editRecurringTemplate(id, payload) {
+      this.loading = true
+      this.error = null
+      try {
+        const updated = await updateRecurringTemplate(id, payload)
+        const index = this.recurringTemplates.findIndex((t) => t.id === id)
+        if (index !== -1) this.recurringTemplates.splice(index, 1, updated)
+      } catch (err) {
+        this.error = err.message || 'Erro ao editar template.'
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async removeRecurringTemplate(id) {
+      this.loading = true
+      this.error = null
+      try {
+        await deleteRecurringTemplate(id)
+        this.recurringTemplates = this.recurringTemplates.filter((t) => t.id !== id)
+      } catch (err) {
+        this.error = err.message || 'Erro ao excluir template.'
         throw err
       } finally {
         this.loading = false
