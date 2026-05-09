@@ -1,0 +1,97 @@
+/* ────────────────────────────────────────────────────────────────────
+   FineBase — Design Tokens  (Obsidian · Riverstone · Voltage)
+   ──────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  --s-1: 4px;  --s-2: 8px;   --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px;  --s-7: 32px; --s-8: 40px;
+  --s-9: 48px; --s-10: 64px;
+
+  --t-xs:  11px; --t-sm: 12px; --t-md: 13px; --t-base: 14px;
+  --t-lg:  16px; --t-xl: 20px; --t-2xl: 24px; --t-3xl: 32px;
+  --t-4xl: 44px;
+
+  --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-xl: 14px;
+}
+
+/* ─── Variation A · Obsidian ──────────────────────────────────────── */
+.v-obsidian {
+  --bg:          #fafafa;
+  --bg-soft:     #f4f4f5;
+  --surface:     #ffffff;
+  --surface-2:   #fafafa;
+  --border:      #e4e4e7;
+  --border-soft: #ececef;
+  --text:        #09090b;
+  --text-2:      #3f3f46;
+  --text-3:      #71717a;
+  --text-4:      #a1a1aa;
+
+  --accent:      oklch(0.52 0.18 268);
+  --accent-fg:   #ffffff;
+  --accent-soft: oklch(0.96 0.04 268);
+  --accent-line: oklch(0.85 0.08 268);
+
+  --pos:      oklch(0.55 0.13 158);
+  --pos-soft: oklch(0.96 0.04 158);
+  --neg:      oklch(0.55 0.18 25);
+  --neg-soft: oklch(0.96 0.03 25);
+  --warn:     oklch(0.7 0.13 75);
+  --warn-soft:oklch(0.96 0.04 80);
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,.02), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 1px 0 rgba(0,0,0,.02), 0 6px 18px -6px rgba(15,15,30,.12);
+
+  --radius:         var(--r-md);
+  --letter-tight:   -0.012em;
+  --letter-tighter: -0.022em;
+
+  --sidebar-bg:     #fafafa;
+  --sidebar-border: var(--border);
+  --header-bg:      var(--bg);
+}
+.v-obsidian.dark {
+  --bg:          #08080a;
+  --bg-soft:     #0d0d10;
+  --surface:     #111114;
+  --surface-2:   #16161a;
+  --border:      #232328;
+  --border-soft: #1a1a1e;
+  --text:        #fafafa;
+  --text-2:      #d4d4d8;
+  --text-3:      #8b8b93;
+  --text-4:      #5a5a63;
+
+  --accent:      oklch(0.72 0.16 268);
+  --accent-fg:   #08080a;
+  --accent-soft: oklch(0.28 0.08 268);
+  --accent-line: oklch(0.4 0.12 268);
+
+  --pos:      oklch(0.72 0.15 158);
+  --pos-soft: oklch(0.25 0.06 158);
+  --neg:      oklch(0.7 0.18 25);
+  --neg-soft: oklch(0.28 0.08 25);
+  --warn:     oklch(0.78 0.13 80);
+  --warn-soft:oklch(0.28 0.06 80);
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,.5);
+  --shadow-md: 0 8px 24px rgba(0,0,0,.6);
+
+  --sidebar-bg:     #0a0a0c;
+  --sidebar-border: var(--border);
+  --header-bg:      var(--bg);
+}
+
+/* ─── Category dot colors ─────────────────────────────────────────── */
+.cat-dot-1 { background: oklch(0.62 0.16 268); }
+.cat-dot-2 { background: oklch(0.7  0.13 165); }
+.cat-dot-3 { background: oklch(0.72 0.14  60); }
+.cat-dot-4 { background: oklch(0.6  0.16  25); }
+.cat-dot-5 { background: oklch(0.6  0.12 320); }
+.cat-dot-6 { background: oklch(0.65 0.1  200); }
+.cat-dot-7 { background: oklch(0.55 0.05  60); }

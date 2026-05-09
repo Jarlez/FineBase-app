@@ -269,7 +269,25 @@ Isso evita que o skeleton apareça ao salvar/editar (quando `loading` é true ma
 Usar BOM (`﻿`) no início e ponto-e-vírgula como separador — obrigatório para o Excel abrir corretamente em pt-BR. Vírgula como separador causa problemas com valores monetários no formato brasileiro.
 
 ### Parcelamentos: 1 registro = todo o parcelamento
-O app armazena apenas 1 linha por compra parcelada. O campo `amount` é o valor da parcela mensal. A parcela atual é calculada dinamicamente pela diferença de meses entre `date` e hoje. O sistema não projeta parcelas futuras nos totais mensais (cada mês reflete apenas os gastos do mês em que foram lançados).
+O app armazena apenas 1 linha por compra parcelada. O campo `amount` é o valor da parcela mensal. A parcela atual é calculada dinamicamente pela diferença de meses entre `date` e hoje. O sistema não projeta parcelas futuras nos totais mensais.
+
+**Campos relevantes:** `installments` (total), `current_installment` (parcela no momento da importação — só metadado), `date` (data de início calculada — sempre dia 01).
+
+**Cálculo da parcela atual** (DashboardPage e ExpensesPage):
+```js
+const start = new Date(e.date + "T00:00:00") // CRÍTICO: sempre com T00:00:00
+const monthDiff = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
+const currentInstallment = Math.max(1, monthDiff + 1)
+```
+
+**Data de início na importação do CSV Nubank:** a data do CSV é ignorada. A data de início é calculada como `hoje - (parcela_atual - 1) meses`, sempre com dia 01 para evitar rollover de mês no JS (ex: 31/mar - 1 mês = 3/mar em vez de 28/fev).
+
+**Data de término:** usa `start.getMonth() + total` (sem -1) para mostrar o mês do pagamento da última fatura, não da cobrança.
+
+**Limitação:** como o registro tem a data de início do parcelamento, ele não aparece no filtro "Este mês" na página de Gastos se o início for em mês anterior. O Dashboard é o lugar correto para acompanhar parcelamentos ativos.
+
+### Parsing de datas: sempre usar T00:00:00
+`new Date("2026-02-01")` sem horário é interpretado como UTC meia-noite. No Brasil (UTC-3) isso vira 31 de janeiro — um mês errado. Sempre usar `new Date(dateString + "T00:00:00")` para forçar interpretação no fuso local. Esse bug causou "Parcela 5/12" aparecer em vez de "4/12".
 
 ### Orçamentos: limite fixo mensal
 A tabela `budgets` tem `category` como UNIQUE. O upsert substitui o limite existente ao salvar para a mesma categoria. O limite vale para todos os meses (não por mês específico), mantendo a configuração simples.

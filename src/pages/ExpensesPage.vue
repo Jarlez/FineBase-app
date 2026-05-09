@@ -11,19 +11,21 @@
         <q-btn
           label="Importar CSV"
           no-caps
-          flat
-          icon="upload_file"
+          unelevated
+          icon="upload"
           rounded
-          color="secondary"
+          style="border: 1px solid var(--border)"
+          class="bg-white text-secondary"
           @click="importModalOpen = true"
         />
         <q-btn
           label="Exportar CSV"
           no-caps
-          flat
+          unelevated
           icon="download"
           rounded
-          color="primary"
+          style="border: 1px solid var(--border)"
+          class="bg-white text-secondary"
           :disable="!filteredExpenses.length"
           @click="exportCSV"
         />
@@ -33,7 +35,7 @@
           unelevated
           icon="add"
           rounded
-          color="primary"
+          class="bg-primary text-white"
           @click="openFormModal"
         />
       </div>
@@ -45,15 +47,14 @@
         class="rounded-borders"
         style="min-width: 450px; max-width: 500px"
       >
-        <q-card-section class="row items-center q-py-sm bg-primary">
-          <div class="text-h6 text-white">
+        <q-card-section class="row items-center modal-head">
+          <div class="modal-title">
             {{ isEditing ? "Editar gasto" : "Adicionar gasto" }}
           </div>
           <q-space />
           <q-btn
             icon="close"
             flat
-            class="text-white"
             round
             dense
             v-close-popup
@@ -175,17 +176,10 @@
       </q-card>
     </q-dialog>
 
-    <FilterCard
-      class="q-mb-md"
-      :category-options="categoryOptions"
-      category-label="Categoria"
-      default-preset="this_month"
-      @update:date-range="filterDateRange = $event"
-      @update:category="filterCategory = $event"
-      @update:preset="filterPreset = $event"
-    />
-
-    <div v-if="!isInitialLoading" class="row q-col-gutter-md q-mb-md stat-cards">
+    <div
+      v-if="!isInitialLoading"
+      class="row q-col-gutter-md q-mb-md stat-cards"
+    >
       <div class="col-12 col-sm-6 col-md-3">
         <q-card class="stat-card stat-card--expense">
           <q-card-section class="stat-card__content">
@@ -271,17 +265,42 @@
         {{ finance.error }}
       </q-card-section>
     </q-card>
-
+    <div class="row items-center q-mb-md">
+      <FilterCard
+        :category-options="categoryOptions"
+        category-label="Categoria"
+        default-preset="this_month"
+        :extra-filters="extraFilters"
+        @update:date-range="filterDateRange = $event"
+        @update:category="filterCategory = $event"
+        @update:preset="filterPreset = $event"
+        @update:filter="onExtraFilterChange"
+      />
+      <q-space></q-space>
+      <div class="text-body2 text-grey-7 q-ml-md">
+        {{ filteredExpenses.length }} Lançamentos
+      </div>
+    </div>
     <!-- Skeleton de carregamento inicial -->
     <template v-if="isInitialLoading">
       <div class="row q-col-gutter-md q-mb-md">
         <div v-for="n in 4" :key="n" class="col-12 col-sm-6 col-md-3">
           <q-card flat class="stat-card">
             <q-card-section class="stat-card__content">
-              <q-skeleton type="rect" width="48px" height="48px" style="border-radius: 12px; flex-shrink: 0" />
+              <q-skeleton
+                type="rect"
+                width="48px"
+                height="48px"
+                style="border-radius: 12px; flex-shrink: 0"
+              />
               <div class="stat-card__body">
                 <q-skeleton type="text" width="60%" />
-                <q-skeleton type="text" width="80%" height="20px" class="q-mt-xs" />
+                <q-skeleton
+                  type="text"
+                  width="80%"
+                  height="20px"
+                  class="q-mt-xs"
+                />
                 <q-skeleton type="text" width="50%" class="q-mt-xs" />
               </div>
             </q-card-section>
@@ -294,13 +313,8 @@
     <q-table
       v-else
       class="table-expenses"
-      table-header-class="bg-primary text-white"
-      card-class=" text-white"
-      table-class="bg-white text-black"
       row-key="id"
       virtual-scroll
-      bordered
-      style="border-radius: 12px"
       flat
       dense
       hide-pagination
@@ -313,41 +327,59 @@
       <template #no-data>
         <div class="full-width column flex-center q-py-xl text-grey-5">
           <q-icon name="receipt_long" size="56px" color="grey-4" />
-          <p class="text-body1 text-grey-6 q-mt-sm q-mb-xs">Nenhum gasto encontrado</p>
-          <p class="text-body2 text-grey-5 q-ma-none">Ajuste os filtros ou adicione um novo gasto</p>
+          <p class="text-body1 text-grey-6 q-mt-sm q-mb-xs">
+            Nenhum gasto encontrado
+          </p>
+          <p class="text-body2 text-grey-5 q-ma-none">
+            Ajuste os filtros ou adicione um novo gasto
+          </p>
         </div>
       </template>
       <template #body-cell-detalhes="props">
         <q-td :props="props">
           <q-btn
+            class="table-action-btn"
             flat
             round
+            dense
             icon="info"
-            size="sm"
             color="grey-7"
             @click="openDetailsModal(props.row)"
           />
         </q-td>
       </template>
+      <template #body-cell-category="props">
+        <q-td :props="props">
+          <div class="category-cell">
+            <span
+              class="category-dot"
+              :style="{ backgroundColor: getCategoryColor(props.row.category) }"
+            ></span>
+            <span>{{ categoryLabel(props.row.category) }}</span>
+          </div>
+        </q-td>
+      </template>
       <template #body-cell-actions="props">
         <q-td :props="props">
           <q-btn
+            class="table-action-btn q-mr-sm"
             flat
             round
+            dense
             icon="edit"
-            size="sm"
-            color="primary"
+            color="grey-7"
             @click="
               startEdit(props.row);
               formModalOpen = true;
             "
           />
           <q-btn
+            class="table-action-btn"
             flat
             round
+            dense
             icon="delete"
-            size="sm"
-            color="negative"
+            color="grey-7"
             @click="removeExpense(props.row)"
           />
         </q-td>
@@ -359,15 +391,14 @@
         class="rounded-borders"
         style="min-width: 380px; max-width: 480px"
       >
-        <q-card-section class="row items-center q-py-sm bg-primary">
-          <div class="text-h6 text-white">Detalhes do gasto</div>
+        <q-card-section class="row items-center modal-head">
+          <div class="modal-title">Detalhes do gasto</div>
           <q-space />
           <q-btn
             icon="close"
             flat
             round
             dense
-            class="text-white"
             v-close-popup
             @click="detailsModalOpen = false"
           />
@@ -472,6 +503,35 @@ function getDefaultDateRange() {
 const filterDateRange = ref(getDefaultDateRange());
 const filterCategory = ref(null);
 const filterPreset = ref("this_month");
+const filterExpenseType = ref(null);
+const filterPaymentMethod = ref(null);
+
+const extraFilters = [
+  {
+    key: "expense_type",
+    label: "Tipo",
+    options: [
+      { label: "Fixo", value: "fixo" },
+      { label: "Variável", value: "variavel" },
+      { label: "Parcelado", value: "parcelado" },
+    ],
+  },
+  {
+    key: "payment_method",
+    label: "Pagamento",
+    options: [
+      { label: "Débito", value: "debito" },
+      { label: "Crédito", value: "credito" },
+      { label: "Pix", value: "pix" },
+      { label: "Dinheiro", value: "dinheiro" },
+    ],
+  },
+];
+
+function onExtraFilterChange({ key, value }) {
+  if (key === "expense_type") filterExpenseType.value = value;
+  if (key === "payment_method") filterPaymentMethod.value = value;
+}
 
 const filteredExpenses = computed(() => {
   let list = finance.expenses;
@@ -481,6 +541,14 @@ const filteredExpenses = computed(() => {
   }
   if (filterCategory.value != null && filterCategory.value !== "") {
     list = list.filter((item) => item.category === filterCategory.value);
+  }
+  if (filterExpenseType.value != null) {
+    list = list.filter((item) => item.expense_type === filterExpenseType.value);
+  }
+  if (filterPaymentMethod.value != null) {
+    list = list.filter(
+      (item) => item.payment_method === filterPaymentMethod.value
+    );
   }
   return list;
 });
@@ -605,7 +673,7 @@ const totalPeriodSubtext = computed(() => {
   if (filterPreset.value !== "this_month" || comp === null) {
     return "Baseado no filtro selecionado";
   }
-  const signal = comp.percent >= 0 ? "🔺 +" : "🔻 ";
+  const signal = comp.percent >= 0 ? "+ " : "- ";
   return `${signal}${comp.percent}% · Mês passado: ${formatCurrency(
     comp.total
   )}`;
@@ -689,6 +757,23 @@ const expenseTypes = [
   { label: "Parcelado", value: "parcelado" },
 ];
 
+const categoryColorMap = {
+  Assinaturas: "#8d6e63",
+  Casa: "#ef5350",
+  Compras: "#5c6bc0",
+  Delivery: "#ff7043",
+  Doações: "#26a69a",
+  Educação: "#42a5f5",
+  Empréstimos: "#ab47bc",
+  Imprevistos: "#ef9a9a",
+  Investimentos: "#66bb6a",
+  Lazer: "#26c6da",
+  "Reserva de emergência": "#fbc02d",
+  Saúde: "#ba68c8",
+  Supermercado: "#7cb342",
+  Transporte: "#fb8c00",
+};
+
 const columns = [
   {
     name: "date",
@@ -698,12 +783,31 @@ const columns = [
     format: (val) => formatDateBR(val),
   },
   { name: "category", label: "Categoria", field: "category", align: "left" },
-  { name: "location", label: "Local", field: "location", align: "left" },
   {
     name: "payment_method",
     label: "Forma de pagamento",
     field: "payment_method",
     align: "left",
+    format: (val) => paymentMethodLabel(val),
+  },
+  {
+    name: "expense_type",
+    label: "Tipo",
+    field: "expense_type",
+    align: "left",
+    format: (val, row) => {
+      if (val === "parcelado" && row.installments) {
+        const start = new Date(row.date + "T00:00:00");
+        const today = new Date();
+        const diff =
+          (today.getFullYear() - start.getFullYear()) * 12 +
+          (today.getMonth() - start.getMonth()) +
+          1;
+        const current = Math.min(Math.max(1, diff), row.installments);
+        return `Parcelado ${current}/${row.installments}`;
+      }
+      return expenseTypeLabel(val);
+    },
   },
   {
     name: "amount",
@@ -742,14 +846,18 @@ const formModalOpen = ref(false);
 const detailsModalOpen = ref(false);
 const selectedExpenseForDetails = ref(null);
 
-const isEditing = computed(() => editingId.value !== null)
-const isInitialLoading = computed(() => finance.loading && finance.expenses.length === 0)
+const isEditing = computed(() => editingId.value !== null);
+const isInitialLoading = computed(
+  () => finance.loading && finance.expenses.length === 0
+);
 const importModalOpen = ref(false);
 
 const paymentMethodLabel = (value) =>
   paymentMethods.find((m) => m.value === value)?.label ?? value ?? "–";
 const expenseTypeLabel = (value) =>
   expenseTypes.find((t) => t.value === value)?.label ?? value ?? "–";
+const categoryLabel = (value) => value || "Sem categoria";
+const getCategoryColor = (category) => categoryColorMap[category] || "#94a3b8";
 
 const openDetailsModal = (row) => {
   selectedExpenseForDetails.value = row;
@@ -858,29 +966,42 @@ async function removeExpense(row) {
 }
 
 function exportCSV() {
-  const headers = ['Data', 'Descrição', 'Categoria', 'Local', 'Forma de Pagamento', 'Tipo', 'Parcelas', 'Valor']
-  const rows = filteredExpenses.value.map(item => [
+  const headers = [
+    "Data",
+    "Descrição",
+    "Categoria",
+    "Local",
+    "Forma de Pagamento",
+    "Tipo",
+    "Parcelas",
+    "Valor",
+  ];
+  const rows = filteredExpenses.value.map((item) => [
     formatDateBR(item.date),
-    item.description || '',
-    item.category || '',
-    item.location || '',
+    item.description || "",
+    item.category || "",
+    item.location || "",
     paymentMethodLabel(item.payment_method),
     expenseTypeLabel(item.expense_type),
-    item.installments || '',
-    String(Number(item.amount || 0)).replace('.', ','),
-  ])
+    item.installments || "",
+    String(Number(item.amount || 0)).replace(".", ","),
+  ]);
 
   const csv = [headers, ...rows]
-    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
-    .join('\n')
+    .map((row) =>
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(";")
+    )
+    .join("\n");
 
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `gastos_${filterDateRange.value?.start ?? 'todos'}_${filterDateRange.value?.end ?? ''}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `gastos_${filterDateRange.value?.start ?? "todos"}_${
+    filterDateRange.value?.end ?? ""
+  }.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 onMounted(() => {
@@ -892,36 +1013,28 @@ onMounted(() => {
 
 <style scoped>
 .page-expenses {
-  padding: 24px 20px;
+  padding: 20px 24px;
 }
 
 .page-card {
-  background: #fff;
+  background: var(--surface);
 }
-
 .page-card--error {
-  background: #fef2f2;
+  background: var(--neg-soft);
+  border-color: var(--neg) !important;
 }
 
-/* Stat cards — mesmo estilo do dashboard */
-.stat-cards {
-  --stat-expense: #dc2626;
-  --stat-daily: #0ea5e9;
-  --stat-top: #7c3aed;
-  --stat-payment: #059669;
-}
-
+/* ── Stat cards ─────────────────────────────────────────── */
 .stat-card {
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.15s;
 }
-
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-card__content {
@@ -930,41 +1043,16 @@ onMounted(() => {
   gap: 14px;
   padding: 20px;
 }
-
 .stat-card__icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-}
-
-.stat-card--expense .stat-card__icon {
-  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
-}
-
-.stat-card--daily .stat-card__icon {
-  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
-}
-
-.stat-card--top .stat-card__icon {
-  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
-}
-
-.stat-card--payment .stat-card__icon {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
-}
-
-.stat-card--compare {
-  background: #f8fafc;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: var(--bg-soft);
+  color: var(--text-2);
 }
 
 .stat-card__body {
@@ -974,79 +1062,88 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
 }
-
 .stat-card__label {
-  font-size: 0.9rem;
+  font-size: 13px;
   font-weight: 500;
-  color: #64748b;
-  letter-spacing: 0.01em;
+  color: var(--text-3);
 }
-
 .stat-card__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-}
-
-.stat-card__value--expense {
-  color: #dc2626;
-}
-
-.stat-card__value--daily {
-  color: #0ea5e9;
-}
-
-.stat-card__value--positive {
-  color: #059669;
-}
-
-.stat-card__top-category {
-  font-size: 1rem;
+  font-size: 24px;
   font-weight: 600;
-  color: #1e293b;
+  letter-spacing: var(--letter-tighter);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.2;
 }
-
+/* .stat-card__value--expense {
+  color: var(--neg);
+} */
+.stat-card__value--daily {
+  color: var(--text);
+}
+.stat-card__value--positive {
+  color: var(--pos);
+}
+.stat-card__top-category {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
 .stat-card__subtext {
-  font-size: 0.8125rem;
-  color: #64748b;
-  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-4);
 }
 
+/* ── Table ──────────────────────────────────────────────── */
 .table-expenses {
-  height: 54vh;
+  height: 60vh;
 }
 .table-expenses :deep(.q-table__middle) {
   overflow: auto;
-  max-height: 54vh;
+  max-height: 60vh;
 }
-
 .table-expenses :deep(thead th) {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--q-primary) !important;
-  color: white !important;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+  background: var(--surface) !important;
+  color: var(--text-3) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.category-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.table-action-btn {
+  min-width: 30px;
+  min-height: 30px;
+}
+.table-action-btn :deep(.q-icon) {
+  font-size: 18px !important;
 }
 
-/* Telas 1600x900 ou maiores */
 @media screen and (max-width: 1600px) and (max-height: 900px) {
+  .table-expenses {
+    height: 52vh;
+  }
+  .table-expenses :deep(.q-table__middle) {
+    max-height: 52vh;
+  }
+}
+@media screen and (max-width: 1365px), screen and (max-height: 767px) {
   .table-expenses {
     height: 42vh;
   }
   .table-expenses :deep(.q-table__middle) {
     max-height: 42vh;
-  }
-}
-
-/* Telas menores que 1366x768 */
-@media screen and (max-width: 1365px), screen and (max-height: 767px) {
-  .table-expenses {
-    height: 29vh;
-  }
-  .table-expenses :deep(.q-table__middle) {
-    max-height: 29vh;
   }
 }
 </style>

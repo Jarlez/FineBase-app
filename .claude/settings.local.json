@@ -9,7 +9,11 @@
       "Bash(npm run *)",
       "mcp__obsidian__str_replace",
       "mcp__claude_ai_Supabase__apply_migration",
-      "mcp__obsidian__view"
+      "mcp__obsidian__view",
+      "Bash(ls \"C:\\\\Users\\\\Jarles\\\\Downloads\\\\Trabalho e Projetos\\\\Obsidian\\\\\" 2>/dev/null || echo \"not found\")",
+      "Read(//c/Users/Jarles/Downloads/Trabalho e Projetos/Obsidian\" 2>/dev/**)",
+      "Bash(ls \"C:/Users/Jarles/Downloads/Trabalho e Projetos/Obsidian/\")",
+      "Read(//c/Users/Jarles/Downloads/Trabalho e Projetos/Obsidian/**)"
     ]
   }
 }

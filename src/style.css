@@ -1,11 +1,217 @@
-/* Base minimalista - complementa o Quasar */
-:root {
-  font-family: system-ui, -apple-system, sans-serif;
+@import './tokens.css';
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+html {
+  font-family: var(--font-sans, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+  letter-spacing: var(--letter-tight, -0.012em);
 }
+
+* { box-sizing: border-box; }
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ── Quasar layout ─────────────────────────────────────────────────── */
+.q-layout,
+.q-page-container,
+.q-page {
+  background: var(--bg) !important;
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+.q-header {
+  background: var(--header-bg, var(--bg)) !important;
+  border-bottom: 1px solid var(--border-soft, #ececef) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+
+/* ── Drawer ────────────────────────────────────────────────────────── */
+.q-drawer {
+  background: var(--sidebar-bg, var(--bg)) !important;
+  box-shadow: none !important;
+  border-right: 1px solid var(--sidebar-border, var(--border)) !important;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.q-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text) !important;
+}
+.q-card--flat { box-shadow: none !important; }
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.q-btn {
+  border-radius: var(--radius) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  letter-spacing: var(--letter-tight) !important;
+  font-weight: 500 !important;
+}
+.q-btn--round { border-radius: 50% !important; }
+.q-btn--rounded { border-radius: 999px !important; }
+
+/* Primary filled → near-black (Obsidian design: buttons are text-on-bg) */
+.q-btn.bg-primary:not(.q-btn--flat):not(.q-btn--outline):not(.q-btn--push) {
+  background: var(--text) !important;
+  color: var(--bg) !important;
+}
+.q-btn.bg-primary:not(.q-btn--flat):not(.q-btn--outline):not(.q-btn--push) .q-focus-helper {
+  background: transparent !important;
+}
+.q-btn.bg-primary:not(.q-btn--flat):not(.q-btn--outline):not(.q-btn--push):hover {
+  background: var(--text-2) !important;
+}
+
+/* ── Inputs / Selects ──────────────────────────────────────────────── */
+.q-field--outlined .q-field__control {
+  border-radius: var(--radius) !important;
+  background: var(--surface-2) !important;
+}
+.q-field--outlined .q-field__control:before {
+  border-color: var(--border) !important;
+}
+.q-field--outlined .q-field__control:hover:before {
+  border-color: var(--text-3) !important;
+}
+.q-field--outlined.q-field--focused .q-field__control:after {
+  border-color: var(--accent) !important;
+}
+.q-field__label {
+  color: var(--text-3) !important;
+  font-size: 13px !important;
+  font-family: var(--font-sans) !important;
+}
+.q-field__native,
+.q-field__input {
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+}
+.q-select__dropdown-icon { color: var(--text-4) !important; }
+
+/* ── Tables ────────────────────────────────────────────────────────── */
+.q-table__container {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+}
+.q-table thead tr th {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text-3) !important;
+  background: var(--surface) !important;
+  padding: 9px 12px !important;
+  border-bottom: 1px solid var(--border) !important;
+  white-space: nowrap;
+  letter-spacing: 0 !important;
+}
+.q-table tbody tr td {
+  padding: 11px 12px !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  color: var(--text-2) !important;
+  font-size: 13px !important;
+  background: var(--surface) !important;
+}
+.q-table tbody tr:hover td { background: var(--bg-soft) !important; }
+.q-table tbody tr:last-child td { border-bottom: 0 !important; }
+
+/* ── Progress bars ─────────────────────────────────────────────────── */
+.q-linear-progress { border-radius: 999px; }
+.q-linear-progress__track { background: var(--bg-soft) !important; }
+
+/* ── Separator ─────────────────────────────────────────────────────── */
+.q-separator { background: var(--border-soft) !important; }
+
+/* ── Skeleton ──────────────────────────────────────────────────────── */
+.q-skeleton {
+  background: var(--bg-soft) !important;
+  border-radius: var(--radius) !important;
+}
+
+/* ── Chips ─────────────────────────────────────────────────────────── */
+.q-chip {
+  border-radius: 999px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-2) !important;
+  font-size: 11px !important;
+  height: 20px !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* ── Menus / popups ────────────────────────────────────────────────── */
+.q-menu {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.q-item {
+  color: var(--text-2) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  min-height: 36px !important;
+}
+.q-item:hover,
+.q-item--active { background: var(--bg-soft) !important; color: var(--text) !important; }
+.q-item__label { color: var(--text) !important; font-size: 13px !important; }
+.q-item__label--caption { color: var(--text-3) !important; font-size: 12px !important; }
+
+/* ── Dialogs ───────────────────────────────────────────────────────── */
+.q-dialog__backdrop {
+  background: color-mix(in oklch, var(--text) 35%, transparent) !important;
+  backdrop-filter: blur(2px) !important;
+}
+.q-dialog .q-card {
+  border-radius: var(--r-xl) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 0 0 1px var(--border) !important;
+}
+
+/* ── Notify toasts ─────────────────────────────────────────────────── */
+.q-notification {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-sans) !important;
+}
+.q-notification__message { color: var(--text) !important; font-size: 13px !important; }
+.q-notification__icon { opacity: .8; }
+.q-notification.bg-positive { border-left: 3px solid var(--pos) !important; }
+.q-notification.bg-negative { border-left: 3px solid var(--neg) !important; }
+.q-notification.bg-warning  { border-left: 3px solid var(--warn) !important; }
+
+/* ── Modal header (replaces bg-primary on dialog headers) ──────────── */
+.modal-head {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-soft);
+  padding: 16px 20px 14px !important;
+}
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: var(--letter-tight);
+}
+.modal-head .q-btn { color: var(--text-3) !important; }

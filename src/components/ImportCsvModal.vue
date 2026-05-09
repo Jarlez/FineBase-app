@@ -2,11 +2,11 @@
   <q-dialog v-model="open" persistent maximized transition-show="slide-up" transition-hide="slide-down">
     <q-card class="import-modal">
       <!-- Header -->
-      <q-card-section class="row items-center q-py-sm bg-primary">
-        <q-icon name="upload_file" size="22px" color="white" class="q-mr-sm" />
-        <div class="text-h6 text-white">Importar CSV do Nubank</div>
+      <q-card-section class="row items-center modal-head">
+        <q-icon name="upload_file" size="18px" class="q-mr-sm" style="color: var(--accent)" />
+        <div class="modal-title">Importar CSV do Nubank</div>
         <q-space />
-        <q-btn icon="close" flat round dense class="text-white" @click="handleClose" />
+        <q-btn icon="close" flat round dense @click="handleClose" />
       </q-card-section>
 
       <!-- Upload area (fase 1: sem arquivo) -->
@@ -79,7 +79,6 @@
             dense
             hide-pagination
             :rows-per-page-options="[0]"
-            table-header-class="bg-primary text-white"
           >
             <!-- Checkbox de seleção -->
             <template #header-cell-selected="props">
@@ -272,11 +271,25 @@ function suggestCategory(title) {
   return ''
 }
 
-// Detecta parcelas no título: "Parcela 4/12" ou "4/12"
+// Detecta parcelas no título: "Parcela 4/12" → extrai parcela atual E total
 function parseInstallments(title) {
   const m = title.match(/parcela\s+(\d+)\/(\d+)/i) || title.match(/\s(\d+)\/(\d+)\s*$/)
-  if (!m) return { expense_type: 'variavel', installments: null }
-  return { expense_type: 'parcelado', installments: parseInt(m[2], 10) }
+  if (!m) return { expense_type: 'variavel', installments: null, current_installment: null }
+  return {
+    expense_type: 'parcelado',
+    installments: parseInt(m[2], 10),
+    current_installment: parseInt(m[1], 10),
+  }
+}
+
+// Calcula a data de início da compra: mês atual − (parcela_atual − 1)
+// Usa dia 1 para evitar problemas com meses de tamanhos diferentes
+function calcStartDate(currentInstallment) {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth() - (currentInstallment - 1), 1)
+  const y = start.getFullYear()
+  const mo = String(start.getMonth() + 1).padStart(2, '0')
+  return `${y}-${mo}-01`
 }
 
 function parseCSV(text) {
@@ -313,17 +326,21 @@ function parseCSV(text) {
 
     if (!date || !title || isNaN(amount)) continue
 
-    const { expense_type, installments } = parseInstallments(title)
+    const { expense_type, installments, current_installment } = parseInstallments(title)
+    const startDate = (expense_type === 'parcelado' && current_installment)
+      ? calcStartDate(current_installment)
+      : date
 
     rows.push({
       _id: `${date}-${title}-${amount}-${i}`,
-      date,
+      date: startDate,
       description: title,
       category: suggestCategory(title),
       amount: Math.abs(amount),
       originalAmount: amount,
       expense_type,
       installments,
+      current_installment,
       payment_method: 'credito',
       location: '',
       selected: amount > 0, // pré-seleciona apenas gastos positivos

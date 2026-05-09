@@ -1,282 +1,306 @@
 <template>
   <q-page class="dashboard-page">
-    <div class="dashboard-page__header q-mb-lg">
-      <h1 class="dashboard-page__title text-h5 text-weight-medium q-ma-none">
-        Dashboard
-      </h1>
-      <p class="text-body2 text-grey-7 q-mt-xs q-mb-none">
-        Visão geral das suas finanças
-      </p>
+    <div class="row justify-between">
+      <div class="dashboard-page__header q-mb-lg col-2">
+        <h1 class="dashboard-page__title text-h5 text-weight-medium q-ma-none">
+          Dashboard
+        </h1>
+        <p class="text-body2 text-grey-7 q-mt-xs q-mb-none">
+          Visão geral das suas finanças
+        </p>
+      </div>
+
+      <div class="row items-center justify-end q-gutter-sm q-mb-lg col">
+        <q-select
+          v-model="selectedMonths"
+          :options="monthOptions"
+          label="Meses"
+          dense
+          outlined
+          multiple
+          emit-value
+          map-options
+          hide-bottom-space
+          class="dash-select"
+          style="min-width: 140px"
+        />
+        <q-select
+          v-model="selectedYear"
+          :options="yearOptions"
+          label="Ano"
+          dense
+          outlined
+          emit-value
+          map-options
+          hide-bottom-space
+          class="dash-select"
+          style="min-width: 90px"
+        />
+        <!-- <q-btn
+          rounded
+          class="text-caption"
+          no-caps
+          flat
+          dense
+          icon="refresh"
+          color="grey-7"
+          :loading="isRefreshing"
+          label="Recarregar dados"
+          @click="refreshData"
+        /> -->
+      </div>
     </div>
-
-    <!-- Resumo do mês atual -->
-    <q-card flat class="current-month-card q-mb-lg rounded-borders">
-      <q-card-section class="q-pa-md">
-        <div class="row items-center justify-between q-mb-sm">
-          <div class="row items-center q-gutter-x-sm">
-            <q-icon name="calendar_today" color="primary" size="18px" />
-            <span class="text-subtitle2 text-weight-medium text-capitalize">{{ currentMonthName }}</span>
-          </div>
-          <q-badge
-            :color="currentMonthBalance >= 0 ? 'positive' : 'negative'"
-            :label="currentMonthBalance >= 0 ? 'No azul' : 'No vermelho'"
-            rounded
-          />
-        </div>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-3">
-            <div class="text-caption text-grey-6">Entradas</div>
-            <div class="text-h6 text-weight-bold text-positive">{{ formatMoney(currentMonthIncomes) }}</div>
-          </div>
-          <div class="col-12 col-sm-3">
-            <div class="text-caption text-grey-6">Gastos</div>
-            <div class="text-h6 text-weight-bold text-negative">{{ formatMoney(currentMonthExpenses) }}</div>
-          </div>
-          <div class="col-12 col-sm-3">
-            <div class="text-caption text-grey-6">Saldo</div>
-            <div
-              class="text-h6 text-weight-bold"
-              :class="currentMonthBalance >= 0 ? 'text-positive' : 'text-negative'"
-            >
-              {{ formatMoney(currentMonthBalance) }}
-            </div>
-          </div>
-          <div class="col-12 col-sm-3">
-            <div class="text-caption text-grey-6">Maior categoria</div>
-            <div class="text-subtitle1 text-weight-bold text-grey-8 ellipsis">
-              {{ currentMonthTopCategory ? currentMonthTopCategory[0] : '–' }}
-            </div>
-            <div v-if="currentMonthTopCategory" class="text-caption text-grey-5">
-              {{ formatMoney(currentMonthTopCategory[1]) }}
-            </div>
-          </div>
-        </div>
-        <div v-if="currentMonthSavingsRate !== null" class="q-mt-sm">
-          <div class="row items-center justify-between q-mb-xs">
-            <span class="text-caption text-grey-6">Taxa de economia</span>
-            <span
-              class="text-caption text-weight-medium"
-              :class="currentMonthSavingsRate >= 0 ? 'text-positive' : 'text-negative'"
-            >{{ currentMonthSavingsRate }}%</span>
-          </div>
-          <q-linear-progress
-            :value="Math.min(Math.abs(currentMonthSavingsRate) / 100, 1)"
-            :color="currentMonthSavingsRate >= 0 ? 'positive' : 'negative'"
-            rounded
-            size="6px"
-            style="background: #e2e8f0"
-          />
-        </div>
-      </q-card-section>
-    </q-card>
-
+    <!-- Bloco principal: resumo + stat cards (esq) | parcelamentos (dir) -->
     <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-12">
-        <q-card flat class="dashboard-card rounded-borders">
-          <q-card-section>
-            <div class="row items-center justify-between">
-              <div
-                class="text-subtitle1 text-grey-7 text-weight-medium q-mb-sm"
-              >
-                Filtros de busca
-              </div>
-              <div class="row items-center q-ml-md">
-                <q-btn
+      <!-- Coluna esquerda: card inteligente (resumo ou comparativo) -->
+      <div class="col-12 col-md-8">
+        <q-card flat class="current-month-card rounded-borders">
+          <q-card-section class="q-pa-md summary-card__section">
+            <!-- Modo: 1 mês — resumo simples -->
+            <template v-if="!isCompareMonths">
+              <div class="row items-center justify-between q-mb-sm">
+                <div class="row items-center q-gutter-x-sm">
+                  <q-icon name="calendar_today" size="18px" />
+                  <span
+                    class="text-subtitle2 text-weight-medium text-capitalize"
+                    >{{ currentMonthName }}</span
+                  >
+                </div>
+                <q-badge
+                  :color="currentMonthBalance >= 0 ? 'positive' : 'negative'"
+                  :label="currentMonthBalance >= 0 ? 'No azul' : 'No vermelho'"
                   rounded
-                  class="text-caption"
-                  no-caps
-                  flat
-                  dense
-                  icon="refresh"
-                  color="grey-7"
-                  :loading="isRefreshing"
-                  label="Recarregar dados"
-                  @click="refreshData"
-                />  
-              </div>
-            </div>
-            <div class="row q-col-gutter-x-md">
-              <div class="col-12 col-sm-3">
-                <q-select
-                  v-model="selectedMonths"
-                  :options="monthOptions"
-                  label="Meses"
-                  dense
-                  outlined
-                  multiple
-                  emit-value
-                  map-options
-                  hide-bottom-space
                 />
               </div>
-              <div class="col-12 col-sm-2">
-                <q-select
-                  v-model="selectedYear"
-                  :options="yearOptions"
-                  label="Ano"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  hide-bottom-space
-                  class="col"
-                />
+              <div class="row q-col-gutter-md">
+                <div class="col-12 col-sm-3">
+                  <div class="text-caption text-grey-6">Entradas</div>
+                  <div class="text-h6 text-weight-bold text-positive">
+                    {{ formatMoney(currentMonthIncomes) }}
+                  </div>
+                </div>
+                <div class="col-12 col-sm-3">
+                  <div class="text-caption text-grey-6">Gastos</div>
+                  <div class="text-h6 text-weight-bold text-negative">
+                    {{ formatMoney(currentMonthExpenses) }}
+                  </div>
+                </div>
+                <div class="col-12 col-sm-3">
+                  <div class="text-caption text-grey-6">Saldo</div>
+                  <div
+                    class="text-h6 text-weight-bold"
+                    :class="
+                      currentMonthBalance >= 0
+                        ? 'text-positive'
+                        : 'text-negative'
+                    "
+                  >
+                    {{ formatMoney(currentMonthBalance) }}
+                  </div>
+                </div>
+                <div class="col-12 col-sm-3">
+                  <div class="text-caption text-grey-6">Maior categoria</div>
+                  <div
+                    class="text-subtitle1 text-weight-bold ellipsis"
+                    :class="$q.dark.isActive ? 'text-grey-3' : 'text-grey-8'"
+                  >
+                    {{
+                      currentMonthTopCategory ? currentMonthTopCategory[0] : "–"
+                    }}
+                  </div>
+                  <div
+                    v-if="currentMonthTopCategory"
+                    class="text-caption text-grey-5"
+                  >
+                    {{ formatMoney(currentMonthTopCategory[1]) }}
+                  </div>
+                </div>
               </div>
-              <q-space></q-space>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
-    <div class="row q-col-gutter-md q-mb-lg stat-cards">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="stat-card stat-card--income">
-          <q-card-section class="stat-card__content">
-            <div class="stat-card__icon">
-              <q-icon name="south_west" size="28px" />
-            </div>
-            <div class="stat-card__body">
-              <span class="stat-card__label">Entradas</span>
-              <template v-if="isCompareMonths">
-                <div
-                  v-for="item in statIncomesByMonth"
-                  :key="item.monthValue"
-                  class="stat-card__compare-line stat-card__value--income"
-                >
-                  {{ item.monthLabel }}: {{ formatMoney(item.value) }}
+              <div v-if="currentMonthSavingsRate !== null" class="q-mt-sm">
+                <div class="row items-center justify-between q-mb-xs">
+                  <span class="text-caption text-grey-6">Taxa de economia</span>
+                  <span
+                    class="text-caption text-weight-medium"
+                    :class="
+                      currentMonthSavingsRate >= 0
+                        ? 'text-positive'
+                        : 'text-negative'
+                    "
+                    >{{ currentMonthSavingsRate }}%</span
+                  >
                 </div>
-              </template>
-              <span v-else class="stat-card__value stat-card__value--income">
-                {{ totalIncomesFormatted }}
-              </span>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="stat-card stat-card--expense">
-          <q-card-section class="stat-card__content">
-            <div class="stat-card__icon">
-              <q-icon name="north_east" size="28px" />
-            </div>
-            <div class="stat-card__body">
-              <span class="stat-card__label">Gastos</span>
-              <template v-if="isCompareMonths">
-                <div
-                  v-for="item in statExpensesByMonth"
-                  :key="item.monthValue"
-                  class="stat-card__compare-line stat-card__value--expense"
-                >
-                  {{ item.monthLabel }}: {{ formatMoney(item.value) }}
-                </div>
-              </template>
-              <span v-else class="stat-card__value stat-card__value--expense">
-                {{ totalExpensesFormatted }}
-              </span>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="stat-card stat-card--balance">
-          <q-card-section class="stat-card__content">
-            <div class="stat-card__icon">
-              <q-icon name="account_balance_wallet" size="28px" />
-            </div>
-            <div class="stat-card__body">
-              <span class="stat-card__label">Saldo</span>
-              <template v-if="isCompareMonths">
-                <div
-                  v-for="item in statBalanceByMonth"
-                  :key="item.monthValue"
-                  class="stat-card__compare-line"
-                  :class="
-                    item.value >= 0
-                      ? 'stat-card__value--positive'
-                      : 'stat-card__value--negative'
+                <q-linear-progress
+                  :value="Math.min(Math.abs(currentMonthSavingsRate) / 100, 1)"
+                  :color="
+                    currentMonthSavingsRate >= 0 ? 'positive' : 'negative'
                   "
-                >
-                  {{ item.monthLabel }}: {{ formatMoney(item.value) }}
+                  rounded
+                  size="6px"
+                  style="background: var(--border-soft)"
+                />
+              </div>
+
+              <!-- Resumo por forma de pagamento -->
+              <div class="q-mt-lg">
+                <div class="text-caption text-grey-5 q-mb-sm">Por forma de pagamento</div>
+                <div class="row q-col-gutter-sm">
+                  <div
+                    v-for="pm in currentMonthPaymentMethods"
+                    :key="pm.method"
+                    class="col-3"
+                  >
+                    <div class="payment-method-item">
+                      <div class="row items-center q-gutter-x-xs q-mb-xs">
+                        <q-icon :name="pm.icon" size="14px" color="primary" />
+                        <span class="text-caption text-grey-6">{{ pm.label }}</span>
+                      </div>
+                      <div class="text-caption text-weight-bold">{{ formatMoney(pm.value) }}</div>
+                      <q-linear-progress
+                        :value="pm.pct / 100"
+                        color="primary"
+                        rounded
+                        size="3px"
+                        style="background: var(--border-soft)"
+                        class="q-mt-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </template>
-              <span
-                v-else
-                class="stat-card__value"
-                :class="
-                  balanceValue >= 0
-                    ? 'stat-card__value--positive'
-                    : 'stat-card__value--negative'
-                "
-              >
-                {{ balanceFormatted }}
-              </span>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="stat-card stat-card--top">
-          <q-card-section class="stat-card__content">
-            <div class="stat-card__icon">
-              <q-icon name="show_chart" size="28px" />
-            </div>
-            <div class="stat-card__body">
-              <span class="stat-card__label">Maior gasto</span>
-              <template v-if="isCompareMonths">
-                <div
-                  v-for="item in statTopCategoryByMonth"
-                  :key="item.monthValue"
-                  class="stat-card__compare-line stat-card__top-category"
-                >
-                  {{ item.monthLabel }}: {{ item.categoryName }}
-                </div>
-              </template>
-              <div v-else class="stat-card__top-info">
-                <span class="stat-card__top-category">
-                  {{ topCategory?.name || "–" }}
+              </div>
+            </template>
+
+            <!-- Modo: 2+ meses — comparativo em tabela -->
+            <template v-else>
+              <div class="row items-center q-gutter-x-sm q-mb-md">
+                <q-icon name="compare_arrows" color="grey-7" size="18px" />
+                <span class="text-subtitle2 text-weight-medium text-grey-8">
+                  Comparativo — {{ selectedYear }}
                 </span>
               </div>
-            </div>
+              <div class="compare-table">
+                <!-- Cabeçalho: meses -->
+                <div class="compare-table__row compare-table__row--header">
+                  <div class="compare-table__label"></div>
+                  <div
+                    v-for="m in statIncomesByMonth"
+                    :key="m.monthValue"
+                    class="compare-table__cell compare-table__cell--month"
+                  >
+                    {{ m.monthLabel }}
+                  </div>
+                </div>
+                <!-- Entradas -->
+                <div class="compare-table__row">
+                  <div class="compare-table__label">Entradas</div>
+                  <div
+                    v-for="m in statIncomesByMonth"
+                    :key="m.monthValue"
+                    class="compare-table__cell text-positive text-weight-bold"
+                  >
+                    {{ formatMoney(m.value) }}
+                  </div>
+                </div>
+                <!-- Gastos -->
+                <div class="compare-table__row">
+                  <div class="compare-table__label">Gastos</div>
+                  <div
+                    v-for="m in statExpensesByMonth"
+                    :key="m.monthValue"
+                    class="compare-table__cell text-negative text-weight-bold"
+                  >
+                    {{ formatMoney(m.value) }}
+                  </div>
+                </div>
+                <!-- Saldo -->
+                <div class="compare-table__row">
+                  <div class="compare-table__label">Saldo</div>
+                  <div
+                    v-for="m in statBalanceByMonth"
+                    :key="m.monthValue"
+                    class="compare-table__cell text-weight-bold"
+                    :class="m.value >= 0 ? 'text-positive' : 'text-negative'"
+                  >
+                    {{ formatMoney(m.value) }}
+                  </div>
+                </div>
+                <!-- Maior gasto -->
+                <div class="compare-table__row compare-table__row--last">
+                  <div class="compare-table__label">Maior gasto</div>
+                  <div
+                    v-for="m in statTopCategoryByMonth"
+                    :key="m.monthValue"
+                    class="compare-table__cell text-grey-8"
+                  >
+                    {{ m.categoryName }}
+                  </div>
+                </div>
+              </div>
+            </template>
           </q-card-section>
         </q-card>
       </div>
-    </div>
 
-    <!-- Parcelamentos em andamento -->
-    <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-12">
+      <!-- Coluna direita: parcelamentos em curso -->
+      <div class="col-12 col-md-4 flex column">
         <q-card flat class="dashboard-card rounded-borders">
-          <q-card-section>
-            <div class="row items-center q-mb-sm">
-              <q-icon name="credit_card" color="primary" size="18px" class="q-mr-xs" />
-              <span class="text-subtitle2 text-weight-medium text-grey-7">Parcelamentos em andamento</span>
-              <q-badge v-if="activeInstallments.length" :label="activeInstallments.length" color="primary" rounded class="q-ml-sm" />
+          <q-card-section class="q-pa-md installments-section">
+            <div class="row items-center justify-between q-mb-md">
+              <div class="row items-center q-gutter-x-xs">
+                <q-icon name="credit_card"  size="18px" />
+                <span class="text-subtitle2 text-weight-medium "
+                  >Parcelamentos em curso</span
+                >
+              </div>
+              <q-badge
+                v-if="activeInstallments.length"
+                :label="`${activeInstallments.length} ativos`"
+                color="primary"
+                rounded
+              />
             </div>
-            <div v-if="!activeInstallments.length" class="text-caption text-grey-5 q-py-md text-center">
+            <div
+              v-if="!activeInstallments.length"
+              class="text-caption text-grey-5 q-py-md text-center"
+            >
               Nenhum parcelamento em andamento
             </div>
-            <div v-else class="row q-col-gutter-sm">
-              <div v-for="item in activeInstallments" :key="item.id" class="col-12 col-sm-6 col-md-4">
-                <div class="installment-card q-pa-sm">
-                  <div class="row items-center justify-between q-mb-xs">
-                    <span class="text-caption text-weight-medium ellipsis" style="max-width: 70%">{{ item.description }}</span>
-                    <q-badge outline color="primary" :label="`${item.currentInstallment}/${item.totalInstallments}`" />
-                  </div>
-                  <div class="text-subtitle2 text-weight-bold text-negative">
-                    {{ formatMoney(item.amount) }}<span class="text-caption text-grey-5">/mês</span>
-                  </div>
-                  <div class="text-caption text-grey-5 q-mt-xs">
-                    Término: <strong>{{ formatInstallmentDate(item.endDate) }}</strong>
-                    · Restante: {{ formatMoney(item.totalRemaining) }}
-                  </div>
-                  <q-linear-progress
-                    :value="item.currentInstallment / item.totalInstallments"
-                    color="primary"
-                    rounded
-                    size="4px"
-                    style="background: #e2e8f0; margin-top: 8px"
-                  />
+            <div v-else class="installments-list">
+              <div
+                v-for="item in activeInstallments"
+                :key="item.id"
+                class="installment-row"
+              >
+                <div class="row items-center justify-between q-mb-xs">
+                  <span
+                    class="text-body2 text-weight-bold ellipsis installment-name"
+                    :class="$q.dark.isActive ? 'text-grey-3' : 'text-grey-8'"
+                  >
+                    {{ item.description }}
+                  </span>
+                  <span
+                    class="text-body2 text-weight-bold installment-amount"
+                    :class="$q.dark.isActive ? 'text-grey-3' : 'text-grey-8'"
+                  >
+                    {{ formatMoney(item.amount) }}
+                  </span>
+                </div>
+                <q-linear-progress
+                  :value="item.currentInstallment / item.totalInstallments"
+                  color="primary"
+                  rounded
+                  size="6px"
+                  style="background: var(--border-soft)"
+                  class="q-mb-xs"
+                />
+                <div class="row items-center justify-between">
+                  <span class="text-caption text-grey-5">
+                    Parcela {{ item.currentInstallment }}/{{
+                      item.totalInstallments
+                    }}
+                  </span>
+                  <span class="text-caption text-grey-5">
+                    termina {{ formatInstallmentDate(item.endDate) }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -292,22 +316,63 @@
           <q-card-section>
             <div class="row items-center justify-between q-mb-sm">
               <div class="row items-center">
-                <q-icon name="savings" color="warning" size="18px" class="q-mr-xs" />
-                <span class="text-subtitle2 text-weight-medium text-grey-7">Orçamento por categoria — {{ currentMonthName }}</span>
+                <q-icon
+                  name="savings"
+                  
+                  size="18px"
+                  class="q-mr-xs"
+                />
+                <span class="text-subtitle2 text-weight-medium"
+                  >Orçamento por categoria — {{ currentMonthName }}</span
+                >
               </div>
-              <q-btn flat dense no-caps size="sm" icon="settings" color="grey-6" label="Gerenciar" @click="budgetDialogOpen = true" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                size="sm"
+                icon="settings"
+                color="grey-6"
+                label="Gerenciar"
+                @click="openBudgetDialog"
+              />
             </div>
-            <div v-if="!finance.budgets.length" class="text-caption text-grey-5 q-py-md text-center">
+            <div
+              v-if="!finance.budgets.length"
+              class="text-caption text-grey-5 q-py-md text-center"
+            >
               Nenhum orçamento configurado.
-              <q-btn flat dense no-caps size="sm" color="primary" label="Configurar agora" @click="budgetDialogOpen = true" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                size="sm"
+                color="primary"
+                label="Configurar agora"
+                @click="openBudgetDialog"
+              />
             </div>
-            <div v-else class="row q-col-gutter-md">
-              <div v-for="b in budgetStatus" :key="b.id" class="col-12 col-sm-6 col-md-4">
+            <div v-else class="budget-scroll">
+              <div
+                v-for="b in budgetStatus"
+                :key="b.id"
+                class="budget-scroll__item"
+              >
                 <div class="budget-item q-pa-sm">
                   <div class="row items-center justify-between q-mb-xs">
-                    <span class="text-caption text-weight-medium">{{ b.category }}</span>
-                    <span class="text-caption" :class="b.exceeded ? 'text-negative text-weight-bold' : 'text-grey-6'">
-                      {{ formatMoney(b.spent) }} / {{ formatMoney(b.limit_amount) }}
+                    <span class="text-caption text-weight-medium">{{
+                      b.category
+                    }}</span>
+                    <span
+                      class="text-caption"
+                      :class="
+                        b.exceeded
+                          ? 'text-negative text-weight-bold'
+                          : 'text-grey-6'
+                      "
+                    >
+                      {{ formatMoney(b.spent) }} /
+                      {{ formatMoney(b.limit_amount) }}
                     </span>
                   </div>
                   <q-linear-progress
@@ -315,10 +380,13 @@
                     :color="b.color"
                     rounded
                     size="8px"
-                    style="background: #e2e8f0"
+                    style="background: var(--border-soft)"
                   />
-                  <div v-if="b.exceeded" class="text-caption text-negative q-mt-xs">
-                    Excedido em {{ formatMoney(b.spent - b.limit_amount) }}
+                  <div class="text-caption q-mt-xs" :class="b.exceeded ? 'text-negative' : 'text-grey-5'">
+                    {{ b.exceeded
+                      ? `Excedido em ${formatMoney(b.spent - b.limit_amount)}`
+                      : `Falta ${formatMoney(b.limit_amount - b.spent)}`
+                    }}
                   </div>
                 </div>
               </div>
@@ -353,260 +421,249 @@
     </div>
 
     <template v-if="viewMode === 'charts'">
-    <div class="row q-col-gutter-md">
-      <div class="col-12 col-md-6">
-        <q-card
-          flat
-          class="dashboard-card dashboard-card--chart rounded-borders"
-        >
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">
-              Gastos por categoria
-            </div>
-          </q-card-section>
-          <q-card-section class="dashboard-card__chart-section">
-            <template v-if="isCompareMonths">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-card
+            flat
+            class="dashboard-card dashboard-card--chart rounded-borders"
+          >
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Gastos por categoria</div>
+            </q-card-section>
+            <q-card-section class="dashboard-card__chart-section">
+              <template v-if="isCompareMonths">
+                <Bar
+                  v-if="categoryCompareBarData.labels.length"
+                  :data="categoryCompareBarData"
+                  :options="barOptions"
+                />
+                <div
+                  v-else
+                  class="text-caption text-grey-6 text-center q-py-xl"
+                >
+                  Nenhum dado para exibir
+                </div>
+              </template>
+              <template v-else>
+                <div
+                  v-if="pieData.datasets[0].data.length"
+                  class="chart-pie-wrap"
+                >
+                  <Pie :data="pieData" :options="pieOptions" />
+                </div>
+                <div
+                  v-else
+                  class="text-caption text-grey-6 text-center q-py-xl"
+                >
+                  Nenhum dado para exibir
+                </div>
+              </template>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-md-6">
+          <q-card
+            flat
+            class="dashboard-card dashboard-card--chart rounded-borders"
+          >
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Gastos por mês</div>
+            </q-card-section>
+            <q-card-section class="dashboard-card__chart-section">
+              <Bar :data="barByMonthData" :options="barOptions" />
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <div class="row q-col-gutter-md q-mt-md">
+        <div class="col-12 col-md-6">
+          <q-card
+            flat
+            class="dashboard-card dashboard-card--chart rounded-borders"
+          >
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Dias do mês com maiores gastos</div>
+            </q-card-section>
+            <q-card-section class="dashboard-card__chart-section">
               <Bar
-                v-if="categoryCompareBarData.labels.length"
-                :data="categoryCompareBarData"
+                v-if="
+                  isCompareMonths
+                    ? dayCompareBarData.labels.length
+                    : barByDayOfMonthData.datasets[0].data.length
+                "
+                :data="
+                  isCompareMonths ? dayCompareBarData : barByDayOfMonthData
+                "
                 :options="barOptions"
               />
               <div v-else class="text-caption text-grey-6 text-center q-py-xl">
                 Nenhum dado para exibir
               </div>
-            </template>
-            <template v-else>
-              <div v-if="pieData.datasets[0].data.length" class="chart-pie-wrap">
-                <Pie :data="pieData" :options="pieOptions" />
-              </div>
-              <div v-else class="text-caption text-grey-6 text-center q-py-xl">
-                Nenhum dado para exibir
-              </div>
-            </template>
-          </q-card-section>
-        </q-card>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-md-6">
+          <q-card
+            flat
+            class="dashboard-card dashboard-card--chart rounded-borders"
+          >
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Saldo no ano</div>
+            </q-card-section>
+            <q-card-section class="dashboard-card__chart-section">
+              <Line :data="lineBalanceData" :options="lineOptions" />
+            </q-card-section>
+          </q-card>
+        </div>
       </div>
-      <div class="col-12 col-md-6">
-        <q-card
-          flat
-          class="dashboard-card dashboard-card--chart rounded-borders"
-        >
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">Gastos por mês</div>
-          </q-card-section>
-          <q-card-section class="dashboard-card__chart-section">
-            <Bar :data="barByMonthData" :options="barOptions" />
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
 
-    <div class="row q-col-gutter-md q-mt-md">
-      <div class="col-12 col-md-6">
-        <q-card
-          flat
-          class="dashboard-card dashboard-card--chart rounded-borders"
-        >
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">
-              Dias do mês com maiores gastos
-            </div>
-          </q-card-section>
-          <q-card-section class="dashboard-card__chart-section">
-            <Bar
-              v-if="isCompareMonths ? dayCompareBarData.labels.length : barByDayOfMonthData.datasets[0].data.length"
-              :data="isCompareMonths ? dayCompareBarData : barByDayOfMonthData"
-              :options="barOptions"
-            />
-            <div
-              v-else
-              class="text-caption text-grey-6 text-center q-py-xl"
+      <div class="row q-col-gutter-md q-mt-md">
+        <div class="col-12">
+          <q-card
+            flat
+            class="dashboard-card dashboard-card--chart rounded-borders"
+          >
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Tendência dos últimos 12 meses</div>
+              <div class="text-caption text-grey-5 q-mt-xs">
+                Evolução mensal de gastos e entradas
+              </div>
+            </q-card-section>
+            <q-card-section
+              class="dashboard-card__chart-section dashboard-card__chart-section--wide"
             >
-              Nenhum dado para exibir
-            </div>
-          </q-card-section>
-        </q-card>
+              <Line :data="trendChartData" :options="lineOptions" />
+            </q-card-section>
+          </q-card>
+        </div>
       </div>
-      <div class="col-12 col-md-6">
-        <q-card
-          flat
-          class="dashboard-card dashboard-card--chart rounded-borders"
-        >
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">Saldo no ano</div>
-          </q-card-section>
-          <q-card-section class="dashboard-card__chart-section">
-            <Line :data="lineBalanceData" :options="lineOptions" />
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
-    <div class="row q-col-gutter-md q-mt-md">
-      <div class="col-12">
-        <q-card flat class="dashboard-card dashboard-card--chart rounded-borders">
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">Tendência dos últimos 12 meses</div>
-            <div class="text-caption text-grey-5 q-mt-xs">Evolução mensal de gastos e entradas</div>
-          </q-card-section>
-          <q-card-section class="dashboard-card__chart-section dashboard-card__chart-section--wide">
-            <Line :data="trendChartData" :options="lineOptions" />
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
     </template>
 
     <template v-else>
-    <div class="row q-col-gutter-md">
-      <div class="col-12 ">
-        <q-card flat class="dashboard-card rounded-borders">
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">Entradas por fonte</div>
-          </q-card-section>
-          <q-card-section class="dashboard-table-section">
-            <q-table
-              :rows="incomeTableRows"
-              :columns="incomeTableColumns"
-              row-key="month"
-              flat
-              dense
-              hide-pagination
-              :pagination="{ rowsPerPage: 0 }"
-              table-header-class="bg-primary text-white"
-              class="dashboard-table"
-            />
-            <div v-if="!incomeTableRows.length" class="text-caption text-grey-6 text-center q-py-lg">
-              Nenhum dado para exibir
-            </div>
-          </q-card-section>
-        </q-card>
+      <div class="row q-col-gutter-md">
+        <div class="col-12">
+          <q-card flat class="dashboard-card rounded-borders">
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Entradas por fonte</div>
+            </q-card-section>
+            <q-card-section class="dashboard-table-section">
+              <q-table
+                :rows="incomeTableRows"
+                :columns="incomeTableColumns"
+                row-key="month"
+                flat
+                dense
+                hide-pagination
+                :pagination="{ rowsPerPage: 0 }"
+                class="dashboard-table"
+              />
+              <div
+                v-if="!incomeTableRows.length"
+                class="text-caption text-grey-6 text-center q-py-lg"
+              >
+                Nenhum dado para exibir
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12">
+          <q-card flat class="dashboard-card rounded-borders">
+            <q-card-section class="q-pb-none">
+              <div class="stat-card__label">Gastos por categoria</div>
+            </q-card-section>
+            <q-card-section class="dashboard-table-section">
+              <q-table
+                :rows="expenseTableRows"
+                :columns="expenseTableColumns"
+                row-key="month"
+                flat
+                dense
+                hide-pagination
+                :pagination="{ rowsPerPage: 0 }"
+                class="dashboard-table"
+              />
+              <div
+                v-if="!expenseTableRows.length"
+                class="text-caption text-grey-6 text-center q-py-lg"
+              >
+                Nenhum dado para exibir
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
       </div>
-      <div class="col-12 ">
-        <q-card flat class="dashboard-card rounded-borders">
-          <q-card-section class="q-pb-none">
-            <div class="stat-card__label">Gastos por categoria</div>
-          </q-card-section>
-          <q-card-section class="dashboard-table-section">
-            <q-table
-              :rows="expenseTableRows"
-              :columns="expenseTableColumns"
-              row-key="month"
-              flat
-              dense
-              hide-pagination
-              :pagination="{ rowsPerPage: 0 }"
-              table-header-class="bg-primary text-white"
-              class="dashboard-table"
-            />
-            <div v-if="!expenseTableRows.length" class="text-caption text-grey-6 text-center q-py-lg">
-              Nenhum dado para exibir
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
     </template>
-    <!-- Dialog gerenciar orçamentos -->
-    <q-dialog v-model="budgetDialogOpen">
-      <q-card style="min-width: 380px; max-width: 500px" class="rounded-borders">
-        <q-card-section class="row items-center q-py-sm bg-primary">
-          <div class="text-h6 text-white">Gerenciar orçamentos</div>
-          <q-space />
-          <q-btn icon="close" flat class="text-white" round dense v-close-popup />
-        </q-card-section>
-        <q-card-section>
-          <div class="text-caption text-grey-6 q-mb-md">
-            Defina um limite mensal por categoria. O dashboard mostra a barra de progresso e alerta quando excedido.
-          </div>
-          <div class="row q-col-gutter-sm q-mb-md items-end">
-            <div class="col-12 col-sm-6">
-              <q-select
-                v-model="budgetForm.category"
-                :options="budgetCategoryOptions"
-                label="Categoria"
-                dense
-                outlined
-                emit-value
-                map-options
-                hide-bottom-space
-              />
-            </div>
-            <div class="col-8 col-sm-4">
-              <q-input
-                v-model.number="budgetForm.limit_amount"
-                type="number"
-                label="Limite (R$)"
-                dense
-                outlined
-                prefix="R$"
-                hide-bottom-space
-              />
-            </div>
-            <div class="col-4 col-sm-2">
-              <q-btn
-                unelevated
-                color="primary"
-                icon="save"
-                round
-                :loading="budgetSaving"
-                :disable="!budgetForm.category || !budgetForm.limit_amount"
-                @click="saveBudgetForm"
-              />
-            </div>
-          </div>
-          <q-list separator>
-            <q-item v-for="b in finance.budgets" :key="b.id" dense>
-              <q-item-section>
-                <q-item-label>{{ b.category }}</q-item-label>
-                <q-item-label caption>Limite: {{ formatMoney(b.limit_amount) }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-btn flat round dense icon="delete" color="negative" size="sm" @click="removeBudgetItem(b.id)" />
-              </q-item-section>
-            </q-item>
-            <q-item v-if="!finance.budgets.length">
-              <q-item-section class="text-caption text-grey-5 text-center">Nenhum orçamento configurado</q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref } from "vue";
+import { useQuasar } from "quasar";
 import { Bar, Line, Pie } from "vue-chartjs";
 import { useFinanceStore } from "../stores/financeStore";
 
 import { formatMoney } from "../utils/formatMoney";
 
 const finance = useFinanceStore();
+const $q = useQuasar();
 
 const now = new Date();
 const selectedMonths = ref([now.getMonth() + 1]);
 const selectedYear = ref(now.getFullYear());
 
-const currentMonth = now.getMonth() + 1
-const currentMonthName = now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
+const currentMonth = now.getMonth() + 1;
+const currentMonthName = now.toLocaleString("pt-BR", {
+  month: "long",
+  year: "numeric",
+});
 
-const currentMonthIncomes = computed(() => finance.monthlyIncomesTotal(currentMonth, currentYear))
-const currentMonthExpenses = computed(() => finance.monthlyExpensesTotal(currentMonth, currentYear))
-const currentMonthBalance = computed(() => finance.balance(currentMonth, currentYear))
+const currentMonthIncomes = computed(() =>
+  finance.monthlyIncomesTotal(currentMonth, currentYear)
+);
+const currentMonthExpenses = computed(() =>
+  finance.monthlyExpensesTotal(currentMonth, currentYear)
+);
+const currentMonthBalance = computed(() =>
+  finance.balance(currentMonth, currentYear)
+);
 
 const currentMonthTopCategory = computed(() => {
-  const cats = finance.expensesByCategory(currentMonth, currentYear)
-  const entries = Object.entries(cats)
-  if (!entries.length) return null
-  return entries.reduce((max, cur) => cur[1] > max[1] ? cur : max)
-})
+  const cats = finance.expensesByCategory(currentMonth, currentYear);
+  const entries = Object.entries(cats);
+  if (!entries.length) return null;
+  return entries.reduce((max, cur) => (cur[1] > max[1] ? cur : max));
+});
+
+const PAYMENT_META = {
+  credito:  { label: 'Crédito',  icon: 'credit_card',       color: 'primary'  },
+  debito:   { label: 'Débito',   icon: 'account_balance',   color: 'info'     },
+  pix:      { label: 'Pix',      icon: 'pix',               color: 'positive' },
+  dinheiro: { label: 'Dinheiro', icon: 'payments',          color: 'warning'  },
+};
+
+const currentMonthPaymentMethods = computed(() => {
+  const map = {};
+  finance.expenses.forEach((e) => {
+    const d = new Date(e.date + "T00:00:00");
+    if (d.getMonth() + 1 !== currentMonth || d.getFullYear() !== currentYear) return;
+    const key = e.payment_method || 'outros';
+    map[key] = (map[key] || 0) + Number(e.amount || 0);
+  });
+  const total = Object.values(map).reduce((s, v) => s + v, 0);
+  return Object.keys(PAYMENT_META).map((method) => ({
+    method,
+    value: map[method] || 0,
+    pct: total > 0 ? ((map[method] || 0) / total) * 100 : 0,
+    ...PAYMENT_META[method],
+  }));
+});
 
 const currentMonthSavingsRate = computed(() => {
-  const inc = currentMonthIncomes.value
-  if (inc <= 0) return null
-  return Math.round((currentMonthBalance.value / inc) * 100)
-})
+  const inc = currentMonthIncomes.value;
+  if (inc <= 0) return null;
+  return Math.round((currentMonthBalance.value / inc) * 100);
+});
 const isRefreshing = ref(false);
 const viewMode = ref("charts"); // 'charts' | 'table'
 
@@ -659,7 +716,8 @@ function parseDateParts(dateStr) {
   const year = parseInt(m[1], 10);
   const month = parseInt(m[2], 10);
   const day = parseInt(m[3], 10);
-  if (Number.isNaN(year) || Number.isNaN(month) || month < 1 || month > 12) return null;
+  if (Number.isNaN(year) || Number.isNaN(month) || month < 1 || month > 12)
+    return null;
   const hasDay = !Number.isNaN(day) && day >= 1 && day <= 31;
   return { year, month, ...(hasDay ? { day } : {}) };
 }
@@ -694,30 +752,6 @@ const filteredIncomes = computed(() => {
   });
 });
 
-const totalExpenses = computed(() =>
-  filteredExpenses.value.reduce(
-    (total, expense) => total + Number(expense.amount || 0),
-    0
-  )
-);
-
-const totalIncomes = computed(() =>
-  filteredIncomes.value.reduce(
-    (total, income) => total + Number(income.amount || 0),
-    0
-  )
-);
-
-const balanceValue = computed(() => totalIncomes.value - totalExpenses.value);
-
-const totalExpensesFormatted = computed(() =>
-  formatMoney(totalExpenses.value)
-);
-const totalIncomesFormatted = computed(() =>
-  formatMoney(totalIncomes.value)
-);
-const balanceFormatted = computed(() => formatMoney(balanceValue.value));
-
 /** Por mês (para cards em modo comparativo). */
 const statIncomesByMonth = computed(() => {
   const year = selectedYear.value;
@@ -730,7 +764,9 @@ const statIncomesByMonth = computed(() => {
       .reduce((sum, i) => sum + Number(i.amount || 0), 0);
     return {
       monthValue,
-      monthLabel: monthOptions.find((m) => m.value === monthValue)?.label || `Mês ${monthValue}`,
+      monthLabel:
+        monthOptions.find((m) => m.value === monthValue)?.label ||
+        `Mês ${monthValue}`,
       value: total,
     };
   });
@@ -747,7 +783,9 @@ const statExpensesByMonth = computed(() => {
       .reduce((sum, e) => sum + Number(e.amount || 0), 0);
     return {
       monthValue,
-      monthLabel: monthOptions.find((m) => m.value === monthValue)?.label || `Mês ${monthValue}`,
+      monthLabel:
+        monthOptions.find((m) => m.value === monthValue)?.label ||
+        `Mês ${monthValue}`,
       value: total,
     };
   });
@@ -778,7 +816,9 @@ const statTopCategoryByMonth = computed(() => {
     const top = entries[0];
     return {
       monthValue,
-      monthLabel: monthOptions.find((m) => m.value === monthValue)?.label || `Mês ${monthValue}`,
+      monthLabel:
+        monthOptions.find((m) => m.value === monthValue)?.label ||
+        `Mês ${monthValue}`,
       categoryName: top ? top[0] : "–",
     };
   });
@@ -827,16 +867,7 @@ const incomeSources = computed(() => {
 
 /** Colunas da tabela de entradas: Mês + uma coluna por fonte. */
 const incomeTableColumns = computed(() => {
-  const cols = [
-    {
-      name: "mes",
-      label: "Mês",
-      field: "mes",
-      align: "left",
-      headerClasses: "bg-primary text-white",
-      classes: "bg-primary text-white",
-    },
-  ];
+  const cols = [{ name: "mes", label: "Mês", field: "mes", align: "left" }];
   incomeSources.value.forEach((source) => {
     cols.push({
       name: source,
@@ -867,7 +898,9 @@ const incomeTableRows = computed(() => {
           return (
             d.getMonth() + 1 === monthValue &&
             d.getFullYear() === year &&
-            (income.source ? String(income.source).trim() || "Sem fonte" : "Sem fonte") === source
+            (income.source
+              ? String(income.source).trim() || "Sem fonte"
+              : "Sem fonte") === source
           );
         })
         .reduce((sum, i) => sum + Number(i.amount || 0), 0);
@@ -880,23 +913,18 @@ const incomeTableRows = computed(() => {
 const expenseCategories = computed(() => {
   const set = new Set();
   filteredExpenses.value.forEach((e) =>
-    set.add(e.category ? String(e.category).trim() || "Sem categoria" : "Sem categoria")
+    set.add(
+      e.category
+        ? String(e.category).trim() || "Sem categoria"
+        : "Sem categoria"
+    )
   );
   return Array.from(set).sort();
 });
 
 /** Colunas da tabela de gastos: Mês + uma coluna por categoria. */
 const expenseTableColumns = computed(() => {
-  const cols = [
-    {
-      name: "mes",
-      label: "Mês",
-      field: "mes",
-      align: "left",
-      headerClasses: "bg-primary text-white",
-      classes: "bg-primary text-white",
-    },
-  ];
+  const cols = [{ name: "mes", label: "Mês", field: "mes", align: "left" }];
   expenseCategories.value.forEach((cat) => {
     cols.push({
       name: cat,
@@ -924,10 +952,9 @@ const expenseTableRows = computed(() => {
       row[category] = filteredExpenses.value
         .filter((expense) => {
           const d = new Date(expense.date);
-          const expCat =
-            expense.category
-              ? String(expense.category).trim() || "Sem categoria"
-              : "Sem categoria";
+          const expCat = expense.category
+            ? String(expense.category).trim() || "Sem categoria"
+            : "Sem categoria";
           return (
             d.getMonth() + 1 === monthValue &&
             d.getFullYear() === year &&
@@ -950,13 +977,14 @@ const pieData = computed(() => {
       {
         data,
         backgroundColor: [
-          "#2563eb",
-          "#059669",
-          "#7c3aed",
-          "#d97706",
-          "#0ea5e9",
-          "#64748b",
-          "#dc2626",
+          "#6366f1",
+          "#34d399",
+          "#fb923c",
+          "#f87171",
+          "#c084fc",
+          "#38bdf8",
+          "#a78bfa",
+          "#4ade80",
         ],
       },
     ],
@@ -1004,13 +1032,24 @@ const categoryCompareBarData = computed(() => {
     if (!parts || parts.year !== year || !months.includes(parts.month)) return;
     const cat = expense.category || "Sem categoria";
     allCategories.add(cat);
-    byMonthCategory[parts.month][cat] = (byMonthCategory[parts.month][cat] || 0) + Number(expense.amount || 0);
+    byMonthCategory[parts.month][cat] =
+      (byMonthCategory[parts.month][cat] || 0) + Number(expense.amount || 0);
   });
 
   const categories = Array.from(allCategories).sort();
-  const colors = ["#2563eb", "#059669", "#7c3aed", "#d97706", "#0ea5e9", "#64748b", "#dc2626"];
+  const colors = [
+    "#6366f1",
+    "#34d399",
+    "#fb923c",
+    "#f87171",
+    "#c084fc",
+    "#38bdf8",
+    "#a78bfa",
+  ];
   const datasets = months.map((monthValue, i) => ({
-    label: monthOptions.find((m) => m.value === monthValue)?.label || `Mês ${monthValue}`,
+    label:
+      monthOptions.find((m) => m.value === monthValue)?.label ||
+      `Mês ${monthValue}`,
     data: categories.map((c) => byMonthCategory[monthValue][c] || 0),
     backgroundColor: colors[i % colors.length],
   }));
@@ -1039,7 +1078,7 @@ const barByMonthData = computed(() => {
     datasets: [
       {
         label: "Gastos",
-        backgroundColor: "#2563eb",
+        backgroundColor: "#6366f1",
         data,
       },
     ],
@@ -1069,7 +1108,7 @@ const barByDayOfMonthData = computed(() => {
     datasets: [
       {
         label: "Gastos",
-        backgroundColor: "#64748b",
+        backgroundColor: "#71717a",
         data,
       },
     ],
@@ -1088,7 +1127,13 @@ const dayCompareBarData = computed(() => {
 
   finance.expenses.forEach((expense) => {
     const parts = parseDateParts(expense.date);
-    if (!parts || parts.year !== year || !months.includes(parts.month) || parts.day == null) return;
+    if (
+      !parts ||
+      parts.year !== year ||
+      !months.includes(parts.month) ||
+      parts.day == null
+    )
+      return;
     byMonthDay[parts.month][parts.day] += Number(expense.amount || 0);
   });
 
@@ -1105,7 +1150,9 @@ const dayCompareBarData = computed(() => {
   const labels = topDays.map((d) => `Dia ${d}`);
   const colors = ["#64748b", "#2563eb", "#059669", "#7c3aed", "#d97706"];
   const datasets = months.map((monthValue, i) => ({
-    label: monthOptions.find((m) => m.value === monthValue)?.label || `Mês ${monthValue}`,
+    label:
+      monthOptions.find((m) => m.value === monthValue)?.label ||
+      `Mês ${monthValue}`,
     data: topDays.map((day) => byMonthDay[monthValue][day] || 0),
     backgroundColor: colors[i % colors.length],
   }));
@@ -1175,73 +1222,87 @@ const lineOptions = {
 
 /** Tendência dos últimos 12 meses: gastos e entradas lado a lado. */
 const trendChartData = computed(() => {
-  const points = []
-  const labels = []
-  const ref = new Date()
+  const points = [];
+  const labels = [];
+  const ref = new Date();
 
   for (let i = 11; i >= 0; i--) {
-    const d = new Date(ref.getFullYear(), ref.getMonth() - i, 1)
-    points.push({ year: d.getFullYear(), month: d.getMonth() + 1 })
-    labels.push(d.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }))
+    const d = new Date(ref.getFullYear(), ref.getMonth() - i, 1);
+    points.push({ year: d.getFullYear(), month: d.getMonth() + 1 });
+    labels.push(d.toLocaleString("pt-BR", { month: "short", year: "2-digit" }));
   }
 
   const expensesData = points.map(({ year, month }) =>
     finance.expenses
-      .filter(e => { const p = parseDateParts(e.date); return p && p.year === year && p.month === month })
+      .filter((e) => {
+        const p = parseDateParts(e.date);
+        return p && p.year === year && p.month === month;
+      })
       .reduce((sum, e) => sum + Number(e.amount || 0), 0)
-  )
+  );
 
   const incomesData = points.map(({ year, month }) =>
     finance.incomes
-      .filter(i => { const p = parseDateParts(i.date); return p && p.year === year && p.month === month })
+      .filter((i) => {
+        const p = parseDateParts(i.date);
+        return p && p.year === year && p.month === month;
+      })
       .reduce((sum, i) => sum + Number(i.amount || 0), 0)
-  )
+  );
 
   return {
     labels,
     datasets: [
       {
-        label: 'Gastos',
+        label: "Gastos",
         data: expensesData,
-        borderColor: '#dc2626',
-        backgroundColor: 'rgba(220, 38, 38, 0.08)',
+        borderColor: "#ef4444",
+        backgroundColor: "rgba(239, 68, 68, 0.06)",
         tension: 0.4,
         fill: true,
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 1.5,
       },
       {
-        label: 'Entradas',
+        label: "Entradas",
         data: incomesData,
-        borderColor: '#059669',
-        backgroundColor: 'rgba(5, 150, 105, 0.08)',
+        borderColor: "#10b981",
+        backgroundColor: "rgba(16, 185, 129, 0.06)",
         tension: 0.4,
         fill: true,
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 1.5,
       },
     ],
-  }
-})
+  };
+});
 
 // Parcelamentos em andamento
 function formatInstallmentDate(date) {
-  if (!date) return '–'
-  return date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+  if (!date) return "–";
+  return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
 }
 
 const activeInstallments = computed(() => {
-  const now = new Date()
+  const now = new Date();
   return finance.expenses
-    .filter((e) => e.expense_type === 'parcelado' && e.installments > 0)
+    .filter((e) => e.expense_type === "parcelado" && e.installments > 0)
     .map((e) => {
-      const start = new Date(e.date)
+      const start = new Date(e.date + "T00:00:00");
       const monthDiff =
-        (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
-      const currentInstallment = Math.max(1, monthDiff + 1)
-      const total = Number(e.installments)
-      const remaining = Math.max(0, total - currentInstallment)
-      const endDate = new Date(start.getFullYear(), start.getMonth() + total - 1, 1)
+        (now.getFullYear() - start.getFullYear()) * 12 +
+        (now.getMonth() - start.getMonth());
+      const currentInstallment = Math.max(1, monthDiff + 1);
+      const total = Number(e.installments);
+      const remaining = Math.max(0, total - currentInstallment);
+      const endDate = new Date(
+        start.getFullYear(),
+        start.getMonth() + total - 1,
+        //start.getMonth() + total , // para mostrar o pagamento, e nao ultima cobrança.
+        1
+      );
       return {
         ...e,
         currentInstallment,
@@ -1249,67 +1310,33 @@ const activeInstallments = computed(() => {
         remaining,
         endDate,
         totalRemaining: (remaining + 1) * Number(e.amount),
-      }
+      };
     })
     .filter((e) => e.currentInstallment <= e.totalInstallments)
-    .sort((a, b) => a.remaining - b.remaining)
-})
+    .sort((a, b) => a.remaining - b.remaining);
+});
 
 // Orçamentos por categoria
 const budgetStatus = computed(() => {
-  const m = new Date().getMonth() + 1
-  const y = new Date().getFullYear()
-  const byCat = finance.expensesByCategory(m, y)
+  const m = new Date().getMonth() + 1;
+  const y = new Date().getFullYear();
+  const byCat = finance.expensesByCategory(m, y);
   return finance.budgets
     .map((b) => {
-      const spent = byCat[b.category] || 0
-      const pct = b.limit_amount > 0 ? (spent / b.limit_amount) * 100 : 0
+      const spent = byCat[b.category] || 0;
+      const pct = b.limit_amount > 0 ? (spent / b.limit_amount) * 100 : 0;
       return {
         ...b,
         spent,
         pct,
         exceeded: spent > b.limit_amount,
-        color: pct >= 100 ? 'negative' : pct >= 80 ? 'warning' : 'positive',
-      }
+        color: pct >= 100 ? "negative" : pct >= 50 ? "warning" : "positive",
+      };
     })
-    .sort((a, b) => b.pct - a.pct)
-})
+    .sort((a, b) => b.pct - a.pct);
+});
 
-const budgetDialogOpen = ref(false)
-const budgetSaving = ref(false)
-const budgetForm = ref({ category: null, limit_amount: null })
-
-const budgetCategoryOptions = [
-  { label: 'Assinaturas', value: 'Assinaturas' },
-  { label: 'Casa', value: 'Casa' },
-  { label: 'Compras', value: 'Compras' },
-  { label: 'Delivery', value: 'Delivery' },
-  { label: 'Doações', value: 'Doações' },
-  { label: 'Educação', value: 'Educação' },
-  { label: 'Empréstimos', value: 'Empréstimos' },
-  { label: 'Imprevistos', value: 'Imprevistos' },
-  { label: 'Investimentos', value: 'Investimentos' },
-  { label: 'Lazer', value: 'Lazer' },
-  { label: 'Reserva de emergência', value: 'Reserva de emergência' },
-  { label: 'Saúde', value: 'Saúde' },
-  { label: 'Supermercado', value: 'Supermercado' },
-  { label: 'Transporte', value: 'Transporte' },
-]
-
-async function saveBudgetForm() {
-  if (!budgetForm.value.category || !budgetForm.value.limit_amount) return
-  budgetSaving.value = true
-  try {
-    await finance.saveBudget(budgetForm.value.category, budgetForm.value.limit_amount)
-    budgetForm.value = { category: null, limit_amount: null }
-  } finally {
-    budgetSaving.value = false
-  }
-}
-
-async function removeBudgetItem(id) {
-  await finance.removeBudget(id)
-}
+const openBudgetDialog = inject("openBudgetDialog");
 
 onMounted(() => {
   if (!finance.expenses.length || !finance.incomes.length) {
@@ -1320,33 +1347,38 @@ onMounted(() => {
 
 <style scoped>
 .dashboard-page {
-  padding: 24px 20px;
+  padding: 20px 24px;
 }
 
+/* ── Header selects ─────────────────────────────────────── */
+.dash-select :deep(.q-field__control) {
+  background: var(--surface) !important;
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
 .dashboard-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.current-month-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
-/* Stat cards — design moderno */
-.stat-cards {
-  --stat-income: #059669;
-  --stat-expense: #dc2626;
-  --stat-balance: #0ea5e9;
-  --stat-top: #7c3aed;
-}
-
+/* ── Stat cards ─────────────────────────────────────────── */
 .stat-card {
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.15s;
 }
-
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-card__content {
@@ -1355,36 +1387,34 @@ onMounted(() => {
   gap: 14px;
   padding: 20px;
 }
-
 .stat-card__icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  background: var(--bg-soft);
+  color: var(--accent);
 }
-
 .stat-card--income .stat-card__icon {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+  color: var(--pos);
 }
-
 .stat-card--expense .stat-card__icon {
-  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  color: var(--neg);
 }
-
 .stat-card--balance .stat-card__icon {
-  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+  color: var(--accent);
 }
-
 .stat-card--top .stat-card__icon {
-  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  color: var(--warn);
+}
+.stat-card--daily .stat-card__icon {
+  color: var(--accent);
+}
+.stat-card--payment .stat-card__icon {
+  color: var(--pos);
 }
 
 .stat-card__body {
@@ -1395,116 +1425,192 @@ onMounted(() => {
   gap: 4px;
 }
 
-.stat-card__compare-line {
-  font-size: 0.95rem;
+.stat-card__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  letter-spacing: 0;
+}
+.stat-card__value {
+  font-size: 22px;
   font-weight: 600;
+  letter-spacing: var(--letter-tighter);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.2;
+}
+.stat-card__value--income {
+  color: var(--pos);
+}
+.stat-card__value--expense {
+  color: var(--neg);
+}
+.stat-card__value--positive {
+  color: var(--pos);
+}
+.stat-card__value--negative {
+  color: var(--neg);
+}
+.stat-card__value--daily {
+  color: var(--text);
+}
+
+.stat-card__compare-line {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
   line-height: 1.4;
 }
-.stat-card__compare-line + .stat-card__compare-line {
-  margin-top: 2px;
-}
-
-.stat-card__label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #64748b;
-  letter-spacing: 0.01em;
-}
-
-.stat-card__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-}
-
-.stat-card__value--income {
-  color: #059669;
-}
-
-.stat-card__value--expense {
-  color: #dc2626;
-}
-
-.stat-card__value--positive {
-  color: #059669;
-}
-
-.stat-card__value--negative {
-  color: #dc2626;
-}
-
-.stat-card__top-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .stat-card__top-category {
-  font-size: 1rem;
+  font-size: 15px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text);
 }
-
 .stat-card__top-location {
-  font-size: 0.8125rem;
-  color: #64748b;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.stat-card__subtext {
+  font-size: 11px;
+  color: var(--text-4);
 }
 
+/* ── Charts ─────────────────────────────────────────────── */
 .dashboard-card--chart .dashboard-card__chart-section {
   min-height: 280px;
 }
-
 .dashboard-card--chart .dashboard-card__chart-section--wide {
   min-height: 220px;
 }
-
 .chart-pie-wrap {
   max-height: 240px;
   margin: 0 auto;
 }
 
-/* Tabelas: scroll + sticky header e primeira coluna (estilo Quasar) */
+/* ── Table view ─────────────────────────────────────────── */
 .dashboard-table-section {
   max-height: 420px;
   overflow: auto;
 }
-
 .dashboard-table :deep(thead th) {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--q-primary) !important;
-  color: white;
+  background: var(--surface) !important;
+  color: var(--text-3) !important;
 }
-
 .dashboard-table :deep(td:first-child),
 .dashboard-table :deep(thead th:first-child) {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--q-primary) !important;
-  color: white;
+  background: var(--surface) !important;
+  color: var(--text-2) !important;
+  font-weight: 500;
 }
-
 .dashboard-table :deep(thead th:first-child) {
   z-index: 3;
 }
 
-.current-month-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+/* ── Payment method item ─────────────────────────────────── */
+.payment-method-item {
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+  padding: 8px 10px;
 }
 
-.installment-card {
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+/* ── Summary card fixed height ───────────────────────────── */
+.summary-card__section {
+  min-height: 290px;
+  height: 290px;
+  max-height: 290px;
 }
 
+/* ── Compare table ───────────────────────────────────────── */
+.compare-table {
+  display: flex;
+  flex-direction: column;
+}
+.compare-table__row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-soft);
+  gap: 8px;
+}
+.compare-table__row--header {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+.compare-table__row--last {
+  border-bottom: none;
+}
+.compare-table__label {
+  flex: 0 0 90px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+.compare-table__cell {
+  flex: 1;
+  font-size: 15px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.compare-table__cell--month {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-family: inherit;
+}
+
+/* ── Installments & budget ───────────────────────────────── */
+.installments-section {
+  height: 290px;
+  max-height: 290px;
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
+}
+.installments-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.installment-row {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.installment-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.installment-name {
+  max-width: 60%;
+}
+.installment-amount {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.budget-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.budget-scroll__item {
+  flex: 0 0 calc(25% - 9px);
+  min-width: 200px;
+}
 .budget-item {
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
 }
 </style>

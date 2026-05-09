@@ -1,6 +1,6 @@
 <template>
   <q-page class="page-incomes">
-     <div class="row  justify-between">
+    <div class="row justify-between">
       <div class="page-expenses__header column q-mb-lg">
         <h1 class="text-h5 text-weight-medium q-ma-none">Entradas</h1>
         <p class="text-body2 text-grey-7 q-mt-xs q-mb-none">
@@ -8,21 +8,31 @@
         </p>
       </div>
       <div class="q-pt-sm">
-        <q-btn label="Adicionar entrada" no-caps unelevated icon="add" rounded color="primary" @click="openFormModal" />
+        <q-btn
+          label="Adicionar entrada"
+          no-caps
+          unelevated
+          icon="add"
+          rounded
+          color="primary"
+          @click="openFormModal"
+        />
       </div>
     </div>
 
     <q-dialog v-model="formModalOpen" persistent>
-      <q-card class="rounded-borders" style="min-width: 450px; max-width: 500px">
-        <q-card-section class="row items-center q-py-sm bg-primary">
-          <div class="text-h6 text-white">
-            {{ isEditing ? 'Editar entrada' : 'Adicionar entrada' }}
+      <q-card
+        class="rounded-borders"
+        style="min-width: 450px; max-width: 500px"
+      >
+        <q-card-section class="row items-center modal-head">
+          <div class="modal-title">
+            {{ isEditing ? "Editar entrada" : "Adicionar entrada" }}
           </div>
           <q-space />
           <q-btn
             icon="close"
             flat
-            class="text-white"
             round
             dense
             v-close-popup
@@ -39,7 +49,7 @@
                   label="Data"
                   dense
                   outlined
-                  :rules="[val => !!val || 'Informe a data']"
+                  :rules="[(val) => !!val || 'Informe a data']"
                 />
               </div>
 
@@ -49,7 +59,7 @@
                   label="Descrição"
                   dense
                   outlined
-                  :rules="[val => !!val || 'Informe a descrição']"
+                  :rules="[(val) => !!val || 'Informe a descrição']"
                 />
               </div>
 
@@ -74,7 +84,9 @@
                   dense
                   outlined
                   prefix="R$"
-                  :rules="[val => val > 0 || 'Informe um valor maior que zero']"
+                  :rules="[
+                    (val) => val > 0 || 'Informe um valor maior que zero',
+                  ]"
                 />
               </div>
             </div>
@@ -96,17 +108,10 @@
       </q-card>
     </q-dialog>
 
-    <FilterCard
-      class="q-mb-md"
-      :category-options="incomeSourceOptions"
-      category-label="Fonte da entrada"
-      default-preset="this_month"
-      @update:date-range="filterDateRange = $event"
-      @update:category="filterCategory = $event"
-      @update:preset="filterPreset = $event"
-    />
-
-    <div v-if="!isInitialLoading" class="row q-col-gutter-md q-mb-md stat-cards">
+    <div
+      v-if="!isInitialLoading"
+      class="row q-col-gutter-md q-mb-md stat-cards"
+    >
       <div class="col-12 col-sm-6 col-md-4">
         <q-card class="stat-card stat-card--expense">
           <q-card-section class="stat-card__content">
@@ -162,7 +167,15 @@
         </q-card>
       </div>
     </div>
-
+    <FilterCard
+      class="q-mb-md"
+      :category-options="incomeSourceOptions"
+      category-label="Fonte da entrada"
+      default-preset="this_month"
+      @update:date-range="filterDateRange = $event"
+      @update:category="filterCategory = $event"
+      @update:preset="filterPreset = $event"
+    />
     <q-card
       v-if="finance.error"
       flat
@@ -179,10 +192,20 @@
         <div v-for="n in 3" :key="n" class="col-12 col-sm-6 col-md-4">
           <q-card flat class="stat-card">
             <q-card-section class="stat-card__content">
-              <q-skeleton type="rect" width="48px" height="48px" style="border-radius: 12px; flex-shrink: 0" />
+              <q-skeleton
+                type="rect"
+                width="48px"
+                height="48px"
+                style="border-radius: 12px; flex-shrink: 0"
+              />
               <div class="stat-card__body">
                 <q-skeleton type="text" width="60%" />
-                <q-skeleton type="text" width="80%" height="20px" class="q-mt-xs" />
+                <q-skeleton
+                  type="text"
+                  width="80%"
+                  height="20px"
+                  class="q-mt-xs"
+                />
                 <q-skeleton type="text" width="50%" class="q-mt-xs" />
               </div>
             </q-card-section>
@@ -195,8 +218,6 @@
     <q-table
       v-else
       class="table-incomes"
-      table-header-class="bg-primary text-white"
-      table-class="bg-white text-black"
       row-key="id"
       virtual-scroll
       bordered
@@ -210,45 +231,55 @@
       :columns="columns"
       :rows-per-page-options="[0]"
     >
-          <template #no-data>
-            <div class="full-width column flex-center q-py-xl text-grey-5">
-              <q-icon name="savings" size="56px" color="grey-4" />
-              <p class="text-body1 text-grey-6 q-mt-sm q-mb-xs">Nenhuma entrada encontrada</p>
-              <p class="text-body2 text-grey-5 q-ma-none">Ajuste os filtros ou adicione uma nova entrada</p>
-            </div>
-          </template>
-          <template #body-cell-detalhes="props">
-            <q-td :props="props">
-              <q-btn
-                flat
-                round
-                icon="info"
-                size="sm"
-                color="grey-7"
-                @click="openDetailsModal(props.row)"
-              />
-            </q-td>
-          </template>
-          <template #body-cell-actions="props">
-            <q-td :props="props">
-              <q-btn
-                flat
-                round
-                icon="edit"
-                size="sm"
-                color="primary"
-                @click="startEdit(props.row); formModalOpen = true"
-              />
-              <q-btn
-                flat
-                round
-                icon="delete"
-                size="sm"
-                color="negative"
-                @click="removeIncome(props.row)"
-              />
-            </q-td>
-          </template>
+      <template #no-data>
+        <div class="full-width column flex-center q-py-xl text-grey-5">
+          <q-icon name="savings" size="56px" color="grey-4" />
+          <p class="text-body1 text-grey-6 q-mt-sm q-mb-xs">
+            Nenhuma entrada encontrada
+          </p>
+          <p class="text-body2 text-grey-5 q-ma-none">
+            Ajuste os filtros ou adicione uma nova entrada
+          </p>
+        </div>
+      </template>
+      <template #body-cell-detalhes="props">
+        <q-td :props="props">
+          <q-btn
+            class="table-action-btn"
+            flat
+            round
+            dense
+            icon="info"
+            color="grey-7"
+            @click="openDetailsModal(props.row)"
+          />
+        </q-td>
+      </template>
+      <template #body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn
+            class="table-action-btn q-mr-sm"
+            flat
+            round
+            dense
+            icon="edit"
+            color="grey-7"
+            @click="
+              startEdit(props.row);
+              formModalOpen = true;
+            "
+          />
+          <q-btn
+            class="table-action-btn"
+            flat
+            round
+            dense
+            icon="delete"
+            color="grey-7"
+            @click="removeIncome(props.row)"
+          />
+        </q-td>
+      </template>
     </q-table>
 
     <q-dialog v-model="detailsModalOpen" persistent>
@@ -256,15 +287,14 @@
         class="rounded-borders"
         style="min-width: 380px; max-width: 480px"
       >
-        <q-card-section class="row items-center q-py-sm bg-primary">
-          <div class="text-h6 text-white">Detalhes da entrada</div>
+        <q-card-section class="row items-center modal-head">
+          <div class="modal-title">Detalhes da entrada</div>
           <q-space />
           <q-btn
             icon="close"
             flat
             round
             dense
-            class="text-white"
             v-close-popup
             @click="detailsModalOpen = false"
           />
@@ -288,11 +318,11 @@
             </div>
             <div class="row justify-between items-center">
               <div class="text-caption text-grey-7">Descrição</div>
-              <div>{{ selectedIncomeForDetails.description || '–' }}</div>
+              <div>{{ selectedIncomeForDetails.description || "–" }}</div>
             </div>
             <div class="row justify-between items-center">
               <div class="text-caption text-grey-7">Fonte</div>
-              <div>{{ selectedIncomeForDetails.source || '–' }}</div>
+              <div>{{ selectedIncomeForDetails.source || "–" }}</div>
             </div>
           </div>
         </q-card-section>
@@ -302,240 +332,248 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useQuasar } from 'quasar'
-import { useFinanceStore } from '../stores/financeStore'
-import FilterCard from '../components/FilterCard.vue'
-import { formatDateBR } from '../utils/formatDate'
+import { computed, onMounted, reactive, ref } from "vue";
+import { useQuasar } from "quasar";
+import { useFinanceStore } from "../stores/financeStore";
+import FilterCard from "../components/FilterCard.vue";
+import { formatDateBR } from "../utils/formatDate";
 
-const $q = useQuasar()
-const finance = useFinanceStore()
+const $q = useQuasar();
+const finance = useFinanceStore();
 
 const getDefaultDateRange = () => {
-  const today = new Date()
-  today.setHours(23, 59, 59, 999)
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  start.setDate(1)
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(1);
   const toISO = (d) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  return { start: toISO(start), end: toISO(today) }
-}
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
+  return { start: toISO(start), end: toISO(today) };
+};
 
-const filterDateRange = ref(getDefaultDateRange())
-const filterCategory = ref(null)
-const filterPreset = ref('this_month')
+const filterDateRange = ref(getDefaultDateRange());
+const filterCategory = ref(null);
+const filterPreset = ref("this_month");
 
 const filteredIncomes = computed(() => {
-  let list = finance.incomes
+  let list = finance.incomes;
   if (filterDateRange.value) {
-    const { start, end } = filterDateRange.value
-    list = list.filter(
-      (item) => item.date >= start && item.date <= end
-    )
+    const { start, end } = filterDateRange.value;
+    list = list.filter((item) => item.date >= start && item.date <= end);
   }
-  if (filterCategory.value != null && filterCategory.value !== '') {
-    list = list.filter((item) => item.source === filterCategory.value)
+  if (filterCategory.value != null && filterCategory.value !== "") {
+    list = list.filter((item) => item.source === filterCategory.value);
   }
-  return list
-})
+  return list;
+});
 
 const daysBetween = (startStr, endStr) => {
-  const a = new Date(startStr)
-  const b = new Date(endStr)
-  return Math.max(1, Math.round((b - a) / (24 * 60 * 60 * 1000)) + 1)
-}
+  const a = new Date(startStr);
+  const b = new Date(endStr);
+  return Math.max(1, Math.round((b - a) / (24 * 60 * 60 * 1000)) + 1);
+};
 
 const totalInPeriod = computed(() =>
-  filteredIncomes.value.reduce(
-    (sum, item) => sum + Number(item.amount || 0),
-    0
-  )
-)
+  filteredIncomes.value.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+);
 
 const daysInPeriod = computed(() => {
-  if (!filterDateRange.value) return 1
-  return daysBetween(filterDateRange.value.start, filterDateRange.value.end)
-})
+  if (!filterDateRange.value) return 1;
+  return daysBetween(filterDateRange.value.start, filterDateRange.value.end);
+});
 
 const totalInPeriodFormatted = computed(() =>
   formatCurrency(totalInPeriod.value)
-)
+);
 
 const averageDaily = computed(() =>
   daysInPeriod.value > 0 ? totalInPeriod.value / daysInPeriod.value : 0
-)
+);
 
 const averageDailyFormatted = computed(() =>
   formatCurrency(averageDaily.value)
-)
+);
 
 const topSourceData = computed(() => {
-  const list = filteredIncomes.value
-  if (!list.length) return null
-  const bySource = {}
+  const list = filteredIncomes.value;
+  if (!list.length) return null;
+  const bySource = {};
   list.forEach((item) => {
-    const src = item.source || 'Outros'
-    bySource[src] = (bySource[src] || 0) + Number(item.amount || 0)
-  })
-  const total = totalInPeriod.value
-  let maxAmount = 0
-  let maxSource = null
+    const src = item.source || "Outros";
+    bySource[src] = (bySource[src] || 0) + Number(item.amount || 0);
+  });
+  const total = totalInPeriod.value;
+  let maxAmount = 0;
+  let maxSource = null;
   Object.entries(bySource).forEach(([src, amount]) => {
     if (amount > maxAmount) {
-      maxAmount = amount
-      maxSource = src
+      maxAmount = amount;
+      maxSource = src;
     }
-  })
-  if (!maxSource || total <= 0) return null
-  const pct = Math.round((maxAmount / total) * 100)
-  return { name: maxSource, amount: maxAmount, percent: pct }
-})
+  });
+  if (!maxSource || total <= 0) return null;
+  const pct = Math.round((maxAmount / total) * 100);
+  return { name: maxSource, amount: maxAmount, percent: pct };
+});
 
-const topSourceName = computed(() => topSourceData.value?.name ?? '–')
+const topSourceName = computed(() => topSourceData.value?.name ?? "–");
 const topSourceSubtext = computed(() => {
-  const d = topSourceData.value
-  if (!d) return ''
-  return `${formatCurrency(d.amount)} (${d.percent}% do total)`
-})
+  const d = topSourceData.value;
+  if (!d) return "";
+  return `${formatCurrency(d.amount)} (${d.percent}% do total)`;
+});
 
 const lastMonthComparison = computed(() => {
-  if (filterPreset.value !== 'this_month' || !filterDateRange.value)
-    return null
-  const now = new Date()
-  const firstLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const lastLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
+  if (filterPreset.value !== "this_month" || !filterDateRange.value)
+    return null;
+  const now = new Date();
+  const firstLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
   const toISO = (d) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  const startLast = toISO(firstLastMonth)
-  const endLast = toISO(lastLastMonth)
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
+  const startLast = toISO(firstLastMonth);
+  const endLast = toISO(lastLastMonth);
   const lastMonthIncomes = finance.incomes.filter(
     (item) => item.date >= startLast && item.date <= endLast
-  )
+  );
   const lastMonthTotal = lastMonthIncomes.reduce(
     (sum, item) => sum + Number(item.amount || 0),
     0
-  )
-  const current = totalInPeriod.value
+  );
+  const current = totalInPeriod.value;
   if (lastMonthTotal === 0) {
-    return { total: 0, percent: current > 0 ? 100 : 0 }
+    return { total: 0, percent: current > 0 ? 100 : 0 };
   }
   const percent = Math.round(
     ((current - lastMonthTotal) / lastMonthTotal) * 100
-  )
-  return { total: lastMonthTotal, percent }
-})
+  );
+  return { total: lastMonthTotal, percent };
+});
 
 const totalPeriodSubtext = computed(() => {
-  const comp = lastMonthComparison.value
-  if (filterPreset.value !== 'this_month' || comp === null) {
-    return 'Baseado no filtro selecionado'
+  const comp = lastMonthComparison.value;
+  if (filterPreset.value !== "this_month" || comp === null) {
+    return "Baseado no filtro selecionado";
   }
-  const signal = comp.percent >= 0 ? '🔺 +' : '🔻 '
-  return `${signal}${comp.percent}% · Mês passado: ${formatCurrency(comp.total)}`
-})
+  const signal = comp.percent >= 0 ? "+ " : "- ";
+  return `${signal}${comp.percent}% · Mês passado: ${formatCurrency(
+    comp.total
+  )}`;
+});
 
 const lastMonthAverageDaily = computed(() => {
-  const comp = lastMonthComparison.value
-  if (comp === null) return null
-  const now = new Date()
+  const comp = lastMonthComparison.value;
+  if (comp === null) return null;
+  const now = new Date();
   const daysInLastMonth = new Date(
     now.getFullYear(),
     now.getMonth(),
     0
-  ).getDate()
-  return daysInLastMonth > 0 ? comp.total / daysInLastMonth : 0
-})
+  ).getDate();
+  return daysInLastMonth > 0 ? comp.total / daysInLastMonth : 0;
+});
 
 const averageDailySubtext = computed(() => {
-  const avg = lastMonthAverageDaily.value
-  if (avg === null || filterPreset.value !== 'this_month') {
-    return 'Baseado no filtro selecionado'
+  const avg = lastMonthAverageDaily.value;
+  if (avg === null || filterPreset.value !== "this_month") {
+    return "Baseado no filtro selecionado";
   }
-  return `vs mês passado: ${formatCurrency(avg)}`
-})
+  return `vs mês passado: ${formatCurrency(avg)}`;
+});
 
 const incomeSourceOptions = [
-  { label: 'Extra', value: 'Extra' },
-  { label: 'Presente', value: 'Presente' },
-  { label: 'Renda Secundária', value: 'Renda Secundária' },
-  { label: 'Resgate investimento', value: 'Resgate investimento' },
-  { label: 'Salário', value: 'Salário' },
-  { label: 'Vale', value: 'Vale' },
-  { label: 'Venda', value: 'Venda' },
-]
+  { label: "Extra", value: "Extra" },
+  { label: "Presente", value: "Presente" },
+  { label: "Renda Secundária", value: "Renda Secundária" },
+  { label: "Resgate investimento", value: "Resgate investimento" },
+  { label: "Salário", value: "Salário" },
+  { label: "Vale", value: "Vale" },
+  { label: "Venda", value: "Venda" },
+];
 
 const columns = [
   {
-    name: 'date',
-    label: 'Data',
-    field: 'date',
-    align: 'left',
+    name: "date",
+    label: "Data",
+    field: "date",
+    align: "left",
     format: (val) => formatDateBR(val),
   },
-  { name: 'description', label: 'Descrição', field: 'description', align: 'left' },
-  { name: 'source', label: 'Fonte', field: 'source', align: 'left' },
   {
-    name: 'amount',
-    label: 'Valor',
-    field: 'amount',
-    align: 'right',
+    name: "description",
+    label: "Descrição",
+    field: "description",
+    align: "left",
+  },
+  { name: "source", label: "Fonte", field: "source", align: "left" },
+  {
+    name: "amount",
+    label: "Valor",
+    field: "amount",
+    align: "right",
     format: (val) => formatCurrency(val),
   },
-  { name: 'detalhes', label: 'Detalhes', field: 'detalhes', align: 'center' },
-  { name: 'actions', label: 'Ações', field: 'actions', align: 'center' },
-]
+  { name: "detalhes", label: "Detalhes", field: "detalhes", align: "center" },
+  { name: "actions", label: "Ações", field: "actions", align: "center" },
+];
 
 const getTodayDate = () => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const emptyForm = () => ({
   id: null,
   date: getTodayDate(),
-  description: '',
-  source: '',
+  description: "",
+  source: "",
   amount: null,
-})
+});
 
-const form = reactive(emptyForm())
-const editingId = ref(null)
-const formModalOpen = ref(false)
-const detailsModalOpen = ref(false)
-const selectedIncomeForDetails = ref(null)
+const form = reactive(emptyForm());
+const editingId = ref(null);
+const formModalOpen = ref(false);
+const detailsModalOpen = ref(false);
+const selectedIncomeForDetails = ref(null);
 
-const isEditing = computed(() => editingId.value !== null)
-const isInitialLoading = computed(() => finance.loading && finance.incomes.length === 0)
+const isEditing = computed(() => editingId.value !== null);
+const isInitialLoading = computed(
+  () => finance.loading && finance.incomes.length === 0
+);
 
 const openDetailsModal = (row) => {
-  selectedIncomeForDetails.value = row
-  detailsModalOpen.value = true
-}
+  selectedIncomeForDetails.value = row;
+  detailsModalOpen.value = true;
+};
 
 const openFormModal = () => {
-  onReset()
-  formModalOpen.value = true
-}
+  onReset();
+  formModalOpen.value = true;
+};
 
 const onModalClose = () => {
-  onReset()
-}
+  onReset();
+};
 
 const formatCurrency = (value) => {
-  const number = Number(value || 0)
-  return number.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
+  const number = Number(value || 0);
+  return number.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+};
 
 function onReset() {
-  Object.assign(form, emptyForm())
-  editingId.value = null
+  Object.assign(form, emptyForm());
+  editingId.value = null;
 }
 
 async function onSubmit() {
@@ -544,108 +582,101 @@ async function onSubmit() {
     description: form.description,
     source: form.source,
     amount: Number(form.amount),
-  }
+  };
 
   try {
     if (isEditing.value && editingId.value) {
-      await finance.editIncome(editingId.value, payload)
+      await finance.editIncome(editingId.value, payload);
       $q.notify({
-        type: 'positive',
-        message: 'Entrada atualizada com sucesso!',
-      })
+        type: "positive",
+        message: "Entrada atualizada com sucesso!",
+      });
     } else {
-      await finance.addIncome(payload)
+      await finance.addIncome(payload);
       $q.notify({
-        type: 'positive',
-        message: 'Entrada adicionada com sucesso!',
-      })
+        type: "positive",
+        message: "Entrada adicionada com sucesso!",
+      });
     }
-    onReset()
-    formModalOpen.value = false
+    onReset();
+    formModalOpen.value = false;
   } catch (error) {
     $q.notify({
-      type: 'negative',
-      message: error.message || 'Erro ao salvar entrada.',
-    })
+      type: "negative",
+      message: error.message || "Erro ao salvar entrada.",
+    });
   }
 }
 
 function startEdit(row) {
-  editingId.value = row.id
+  editingId.value = row.id;
   Object.assign(form, {
     id: row.id,
-    date: row.date || '',
-    description: row.description || '',
-    source: row.source || '',
+    date: row.date || "",
+    description: row.description || "",
+    source: row.source || "",
     amount: row.amount,
-  })
+  });
 }
 
 function cancelEdit() {
-  onReset()
-  formModalOpen.value = false
+  onReset();
+  formModalOpen.value = false;
 }
 
 async function removeIncome(row) {
   $q.dialog({
-    title: 'Excluir entrada',
-    message: 'Tem certeza que deseja excluir esta entrada?',
+    title: "Excluir entrada",
+    message: "Tem certeza que deseja excluir esta entrada?",
     cancel: true,
     persistent: true,
   }).onOk(async () => {
     try {
-      await finance.removeIncome(row.id)
+      await finance.removeIncome(row.id);
       $q.notify({
-        type: 'positive',
-        message: 'Entrada excluída com sucesso!',
-      })
+        type: "positive",
+        message: "Entrada excluída com sucesso!",
+      });
     } catch (error) {
       $q.notify({
-        type: 'negative',
-        message: error.message || 'Erro ao excluir entrada.',
-      })
+        type: "negative",
+        message: error.message || "Erro ao excluir entrada.",
+      });
     }
-  })
+  });
 }
 
 onMounted(() => {
   if (!finance.expenses.length || !finance.incomes.length) {
-    finance.loadData()
+    finance.loadData();
   }
-})
+});
 </script>
 
 <style scoped>
 .page-incomes {
-  padding: 24px 20px;
+  padding: 20px 24px;
 }
 
 .page-card {
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: var(--surface);
 }
-
 .page-card--error {
-  background: #fef2f2;
+  background: var(--neg-soft);
+  border-color: var(--neg) !important;
 }
 
-.stat-cards {
-  --stat-expense: #dc2626;
-  --stat-daily: #0ea5e9;
-  --stat-top: #7c3aed;
-}
-
+/* ── Stat cards ─────────────────────────────────────────── */
 .stat-card {
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.15s;
 }
-
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-card__content {
@@ -654,31 +685,16 @@ onMounted(() => {
   gap: 14px;
   padding: 20px;
 }
-
 .stat-card__icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-}
-
-.stat-card--expense .stat-card__icon {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
-}
-
-.stat-card--daily .stat-card__icon {
-  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
-}
-
-.stat-card--top .stat-card__icon {
-  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  background: var(--bg-soft);
+  color: var(--text-2);
 }
 
 .stat-card__body {
@@ -688,60 +704,69 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
 }
-
 .stat-card__label {
-  font-size: 0.9rem;
+  font-size: 13px;
   font-weight: 500;
-  color: #64748b;
-  letter-spacing: 0.01em;
+  color: var(--text-3);
 }
-
 .stat-card__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-}
-
-.stat-card__value--positive {
-  color: #059669;
-}
-
-.stat-card__value--daily {
-  color: #0ea5e9;
-}
-
-.stat-card__top-category {
-  font-size: 1rem;
+  font-size: 24px;
   font-weight: 600;
-  color: #1e293b;
+  letter-spacing: var(--letter-tighter);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1.2;
 }
-
+/* .stat-card__value--positive {
+  color: var(--pos);
+} */
+.stat-card__value--daily {
+  color: var(--text);
+}
+.stat-card__top-category {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
 .stat-card__subtext {
-  font-size: 0.8125rem;
-  color: #64748b;
-  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-4);
 }
 
+/* ── Table ──────────────────────────────────────────────── */
 .table-incomes {
-  height: 54vh;
+  height: 60vh;
 }
-
 .table-incomes :deep(.q-table__middle) {
   overflow: auto;
-  max-height: 54vh;
+  max-height: 60vh;
 }
-
 .table-incomes :deep(thead th) {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--q-primary) !important;
-  color: white !important;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+  background: var(--surface) !important;
+  color: var(--text-3) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.table-action-btn {
+  min-width: 30px;
+  min-height: 30px;
+}
+.table-action-btn :deep(.q-icon) {
+  font-size: 18px !important;
 }
 
 @media screen and (max-width: 1600px) and (max-height: 900px) {
+  .table-incomes {
+    height: 52vh;
+  }
+  .table-incomes :deep(.q-table__middle) {
+    max-height: 52vh;
+  }
+}
+@media screen and (max-width: 1365px), screen and (max-height: 767px) {
   .table-incomes {
     height: 42vh;
   }
@@ -749,14 +774,4 @@ onMounted(() => {
     max-height: 42vh;
   }
 }
-
-@media screen and (max-width: 1365px), screen and (max-height: 767px) {
-  .table-incomes {
-    height: 29vh;
-  }
-  .table-incomes :deep(.q-table__middle) {
-    max-height: 29vh;
-  }
-}
 </style>
-

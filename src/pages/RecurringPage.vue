@@ -23,10 +23,10 @@
     <!-- Dialog formulário -->
     <q-dialog v-model="formModalOpen" persistent>
       <q-card style="min-width: 450px; max-width: 500px" class="rounded-borders">
-        <q-card-section class="row items-center q-py-sm bg-primary">
-          <div class="text-h6 text-white">{{ isEditing ? 'Editar template' : 'Novo template' }}</div>
+        <q-card-section class="row items-center modal-head">
+          <div class="modal-title">{{ isEditing ? 'Editar template' : 'Novo template' }}</div>
           <q-space />
-          <q-btn icon="close" flat class="text-white" round dense v-close-popup @click="onModalClose" />
+          <q-btn icon="close" flat round dense v-close-popup @click="onModalClose" />
         </q-card-section>
         <q-card-section>
           <q-form @submit.prevent="onSubmit">
@@ -316,18 +316,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-recurring {
-  padding: 24px 20px;
-}
+.page-recurring { padding: 20px 24px; }
 
 .template-card {
-  background: #fff;
-  border-radius: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .15s;
 }
-
-.template-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
+.template-card:hover { box-shadow: var(--shadow-md); }
 </style>
