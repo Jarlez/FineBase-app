@@ -105,12 +105,23 @@
             <!-- Descrição editável -->
             <template #body-cell-description="props">
               <q-td :props="props">
-                <q-input
-                  v-model="props.row.description"
-                  dense
-                  borderless
-                  style="min-width: 180px"
-                />
+                <div class="row items-center no-wrap">
+                  <q-input
+                    v-model="props.row.description"
+                    dense
+                    borderless
+                    style="min-width: 180px"
+                    :input-style="props.row.isDuplicate ? 'color: #9e9e9e' : ''"
+                  />
+                  <q-badge
+                    v-if="props.row.isDuplicate"
+                    color="grey-4"
+                    text-color="grey-7"
+                    label="Já existe"
+                    class="q-ml-xs"
+                    style="flex-shrink: 0; font-size: 10px"
+                  />
+                </div>
               </q-td>
             </template>
 
@@ -184,6 +195,41 @@
       </template>
     </q-card>
   </q-dialog>
+
+  <!-- Confirmação de duplicatas -->
+  <q-dialog v-model="confirmDuplicateDialog" persistent>
+    <q-card style="min-width: 420px; max-width: 520px">
+      <q-card-section class="row items-center q-pb-sm">
+        <q-icon name="warning" color="warning" size="28px" class="q-mr-md" />
+        <div>
+          <div class="text-h6">Possíveis duplicatas</div>
+          <div class="text-body2 text-grey-6">
+            {{ selectedDuplicates.length }} item{{ selectedDuplicates.length !== 1 ? 's' : '' }} selecionado{{ selectedDuplicates.length !== 1 ? 's' : '' }} já exist{{ selectedDuplicates.length !== 1 ? 'em' : 'e' }} na base.
+          </div>
+        </div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        <p class="text-body2 q-mb-sm">Deseja importar mesmo assim?</p>
+        <q-list dense bordered separator class="rounded-borders" style="max-height: 260px; overflow-y: auto">
+          <q-item v-for="row in selectedDuplicates" :key="row._id" dense class="q-py-xs">
+            <q-item-section>
+              <q-item-label lines="1">{{ row.description }}</q-item-label>
+              <q-item-label caption>{{ formatDateBR(row.date) }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <span class="text-negative text-weight-medium text-body2">{{ formatCurrency(row.amount) }}</span>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card-section>
+
+      <q-card-actions align="right" class="q-pa-md">
+        <q-btn flat no-caps rounded label="Cancelar" v-close-popup />
+        <q-btn unelevated no-caps rounded color="warning" icon="warning" label="Importar mesmo assim" @click="confirmAndImport" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup>
@@ -210,6 +256,7 @@ const isDragging = ref(false)
 const parseError = ref(null)
 const parsedRows = ref([])
 const importing = ref(false)
+const confirmDuplicateDialog = ref(false)
 
 // Apenas registros com amount > 0 (gastos reais)
 const expenseRows = computed(() => parsedRows.value.filter(r => r.amount > 0))
@@ -222,12 +269,8 @@ const selectedTotal = computed(() => selectedRows.value.reduce((s, r) => s + r.a
 const allSelected = computed(() => expenseRows.value.length > 0 && expenseRows.value.every(r => r.selected))
 const someSelected = computed(() => !allSelected.value && expenseRows.value.some(r => r.selected))
 
-// Detecta possíveis duplicatas: mesma data + valor já existente na store
-const duplicateCount = computed(() =>
-  selectedRows.value.filter(row =>
-    finance.expenses.some(e => e.date === row.date && Number(e.amount) === row.amount)
-  ).length
-)
+const duplicateCount = computed(() => expenseRows.value.filter(r => r.isDuplicate).length)
+const selectedDuplicates = computed(() => selectedRows.value.filter(r => r.isDuplicate))
 
 const categoryOptions = [
   { label: '— Sem categoria —', value: '' },
@@ -282,14 +325,18 @@ function parseInstallments(title) {
   }
 }
 
-// Calcula a data de início da compra: mês atual − (parcela_atual − 1)
-// Usa dia 1 para evitar problemas com meses de tamanhos diferentes
-function calcStartDate(currentInstallment) {
-  const now = new Date()
-  const start = new Date(now.getFullYear(), now.getMonth() - (currentInstallment - 1), 1)
-  const y = start.getFullYear()
-  const mo = String(start.getMonth() + 1).padStart(2, '0')
-  return `${y}-${mo}-01`
+// Calcula a data real da parcela N, dado que a parcela currentN foi cobrada em csvDateStr.
+// Preserva o dia do mês; ajusta para o último dia se o mês destino for menor (ex: dia 29 em fev → 28).
+function calcInstallmentDate(csvDateStr, currentN, targetN) {
+  const [year, month, day] = csvDateStr.split('-').map(Number)
+  const monthOffset = targetN - currentN
+  // Primeiro dia do mês alvo para obter ano/mês corretos sem rollover de dia
+  const anchor = new Date(year, month - 1 + monthOffset, 1)
+  const targetYear = anchor.getFullYear()
+  const targetMonth = anchor.getMonth()
+  const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate()
+  const safeDay = Math.min(day, lastDay)
+  return `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`
 }
 
 function parseCSV(text) {
@@ -327,24 +374,45 @@ function parseCSV(text) {
     if (!date || !title || isNaN(amount)) continue
 
     const { expense_type, installments, current_installment } = parseInstallments(title)
-    const startDate = (expense_type === 'parcelado' && current_installment)
-      ? calcStartDate(current_installment)
-      : date
 
-    rows.push({
-      _id: `${date}-${title}-${amount}-${i}`,
-      date: startDate,
-      description: title,
-      category: suggestCategory(title),
-      amount: Math.abs(amount),
-      originalAmount: amount,
-      expense_type,
-      installments,
-      current_installment,
-      payment_method: 'credito',
-      location: '',
-      selected: amount > 0, // pré-seleciona apenas gastos positivos
-    })
+    if (expense_type === 'parcelado' && current_installment && installments) {
+      // Gera um registro por parcela já ocorrida (1 até current_installment)
+      for (let n = 1; n <= current_installment; n++) {
+        const installDate = calcInstallmentDate(date, current_installment, n)
+        const installDesc = title.replace(/parcela\s+\d+\/\d+/i, `Parcela ${n}/${installments}`)
+        rows.push({
+          _id: `${date}-${title}-${amount}-${i}-${n}`,
+          date: installDate,
+          description: installDesc,
+          category: suggestCategory(title),
+          amount: Math.abs(amount),
+          originalAmount: amount,
+          expense_type,
+          installments,
+          current_installment: n,
+          payment_method: 'credito',
+          location: '',
+          selected: amount > 0,
+          isDuplicate: false,
+        })
+      }
+    } else {
+      rows.push({
+        _id: `${date}-${title}-${amount}-${i}`,
+        date,
+        description: title,
+        category: suggestCategory(title),
+        amount: Math.abs(amount),
+        originalAmount: amount,
+        expense_type,
+        installments,
+        current_installment,
+        payment_method: 'credito',
+        location: '',
+        selected: amount > 0,
+        isDuplicate: false,
+      })
+    }
   }
 
   if (!rows.length) throw new Error('Nenhuma transação encontrada no arquivo.')
@@ -361,7 +429,25 @@ function processFile(file) {
   const reader = new FileReader()
   reader.onload = (e) => {
     try {
-      parsedRows.value = parseCSV(e.target.result)
+      const rows = parseCSV(e.target.result)
+      rows.forEach((row) => {
+        if (row.amount > 0) {
+          const isDuplicate = row.expense_type === 'parcelado'
+            // Parcelados: descrição inclui "Parcela X/Y", que é única por compra+parcela
+            ? finance.expenses.some(
+                (exp) => exp.description === row.description && Number(exp.amount) === row.amount
+              )
+            // Outros gastos: data + valor (comportamento original)
+            : finance.expenses.some(
+                (exp) => exp.date === row.date && Number(exp.amount) === row.amount
+              )
+          if (isDuplicate) {
+            row.isDuplicate = true
+            row.selected = false
+          }
+        }
+      })
+      parsedRows.value = rows
     } catch (err) {
       parseError.value = err.message
     }
@@ -394,6 +480,19 @@ function handleClose() {
 }
 
 async function doImport() {
+  if (selectedDuplicates.value.length > 0) {
+    confirmDuplicateDialog.value = true
+    return
+  }
+  await runImport()
+}
+
+async function confirmAndImport() {
+  confirmDuplicateDialog.value = false
+  await runImport()
+}
+
+async function runImport() {
   importing.value = true
   let success = 0
   let errors = 0

@@ -642,7 +642,6 @@ const lastMonthComparison = computed(() => {
   if (filterPreset.value !== "this_month" || !filterDateRange.value)
     return null;
   const now = new Date();
-  const firstThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const firstLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
   const toISO = (d) =>
@@ -797,6 +796,8 @@ const columns = [
     align: "left",
     format: (val, row) => {
       if (val === "parcelado" && row.installments) {
+        const match = row.description?.match(/parcela\s+(\d+)\/(\d+)/i);
+        if (match) return `Parcelado ${match[1]}/${match[2]}`;
         const start = new Date(row.date + "T00:00:00");
         const today = new Date();
         const diff =

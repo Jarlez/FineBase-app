@@ -590,6 +590,7 @@ const PAGE_NAMES = {
   expenses:   'Gastos',
   incomes:    'Entradas',
   recurring:  'Recorrentes',
+  'monthly-closing': 'Fechamento mensal',
 }
 
 const currentPageName = computed(() => PAGE_NAMES[route.name] || 'FineBase')
@@ -625,6 +626,11 @@ const navItems = computed(() => [
     icon: 'repeat',
     label: 'Recorrentes',
     count: finance.recurringTemplates.length || undefined,
+  },
+  {
+    to: '/fechamento-mensal',
+    icon: 'fact_check',
+    label: 'Fechamento mensal',
   },
 ])
 

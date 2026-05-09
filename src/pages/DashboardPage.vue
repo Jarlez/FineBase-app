@@ -1287,30 +1287,65 @@ function formatInstallmentDate(date) {
 
 const activeInstallments = computed(() => {
   const now = new Date();
-  return finance.expenses
-    .filter((e) => e.expense_type === "parcelado" && e.installments > 0)
+  const groups = {};
+
+  finance.expenses.forEach((e) => {
+    if (e.expense_type !== "parcelado" || !e.installments) return;
+
+    // Tenta extrair "Parcela X/Y" da descrição (novo modelo: múltiplos registros)
+    const match = e.description?.match(/parcela\s+(\d+)\/(\d+)/i);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      const total = parseInt(match[2], 10);
+      const baseDesc = e.description.replace(/\s*-?\s*parcela\s+\d+\/\d+\s*$/i, "").trim();
+      const key = `${baseDesc}__${total}__${e.amount}`;
+      // Mantém apenas o registro da parcela mais recente para display
+      if (!groups[key] || n > groups[key]._n) {
+        groups[key] = { ...e, _n: n, _total: total, _baseDesc: baseDesc };
+      }
+    } else {
+      // Modelo antigo: 1 registro por compra, parcela calculada pela data
+      groups[e.id] = { ...e, _n: null };
+    }
+  });
+
+  return Object.values(groups)
     .map((e) => {
-      const start = new Date(e.date + "T00:00:00");
-      const monthDiff =
-        (now.getFullYear() - start.getFullYear()) * 12 +
-        (now.getMonth() - start.getMonth());
-      const currentInstallment = Math.max(1, monthDiff + 1);
-      const total = Number(e.installments);
-      const remaining = Math.max(0, total - currentInstallment);
-      const endDate = new Date(
-        start.getFullYear(),
-        start.getMonth() + total - 1,
-        //start.getMonth() + total , // para mostrar o pagamento, e nao ultima cobrança.
-        1
-      );
-      return {
-        ...e,
-        currentInstallment,
-        totalInstallments: total,
-        remaining,
-        endDate,
-        totalRemaining: (remaining + 1) * Number(e.amount),
-      };
+      if (e._n !== null) {
+        // Novo modelo: parcela atual = número mais alto importado
+        const total = e._total;
+        const currentInstallment = e._n;
+        const remaining = Math.max(0, total - currentInstallment);
+        const lastDate = new Date(e.date + "T00:00:00");
+        const endDate = new Date(lastDate.getFullYear(), lastDate.getMonth() + remaining + 1, 1);
+        return {
+          ...e,
+          description: e._baseDesc,
+          currentInstallment,
+          totalInstallments: total,
+          remaining,
+          endDate,
+          totalRemaining: remaining * Number(e.amount),
+        };
+      } else {
+        // Modelo antigo: calcula parcela atual pela diferença de meses
+        const start = new Date(e.date + "T00:00:00");
+        const monthDiff =
+          (now.getFullYear() - start.getFullYear()) * 12 +
+          (now.getMonth() - start.getMonth());
+        const currentInstallment = Math.max(1, monthDiff + 1);
+        const total = Number(e.installments);
+        const remaining = Math.max(0, total - currentInstallment);
+        const endDate = new Date(start.getFullYear(), start.getMonth() + total, 1);
+        return {
+          ...e,
+          currentInstallment,
+          totalInstallments: total,
+          remaining,
+          endDate,
+          totalRemaining: (remaining + 1) * Number(e.amount),
+        };
+      }
     })
     .filter((e) => e.currentInstallment <= e.totalInstallments)
     .sort((a, b) => a.remaining - b.remaining);

@@ -8,8 +8,7 @@
 - [x] **Visão de parcelamentos** — Seção listando todos os gastos parcelados em andamento: parcela X/Y, valor da parcela, quando termina, total restante.
 - [x] **Gastos recorrentes / templates** — Configurar gastos que se repetem todo mês (aluguel, academia, assinaturas). Um clique pra lançar no mês atual.
 - [x] **Resumo do mês atual destacado** — Card no topo do Dashboard com entradas, gastos, saldo e taxa de economia do mês corrente.
-- [ ] **Responsividade mobile** *(baixa prioridade)* — Ajustar formulários e tabelas para telas pequenas.
-- [ ] **Importar CSV do Nubank** — Upload do extrato CSV exportado pelo app Nubank. Preview com categorização automática por palavra-chave, seleção de registros e importação em lote. Detecta parcelas automaticamente (ex: "Parcela 4/12").
+- [x] **Importar CSV do Nubank** — Upload do extrato CSV exportado pelo app Nubank. Preview com categorização automática por palavra-chave, seleção de registros e importação em lote. Modelo multi-registro para parcelamentos (1 registro por parcela já cobrada, com data real). Confirmação antes de importar duplicatas.
 
 ### UX / Qualidade
 
@@ -31,10 +30,10 @@
 
 - [ ] Autenticação completa (Supabase Auth — email/senha, Google)
 - [ ] Conta compartilhada do casal (`household_id` + RLS por grupo)
-- [ ] Metas financeiras (ex: juntar R$5.000 em 6 meses, com progresso)
-- [ ] Alertas e notificações (orçamento ultrapassado, resumo semanal)
-- [ ] Importação de extrato CSV/OFX (Nubank, bancos)
-- [ ] Dashboard consolidado do casal
+- [ ] Dashboard consolidado do casal (visão com gastos de ambos, filtro por pessoa)
+- [ ] Metas financeiras (ex: juntar R$5.000 em 6 meses, com progresso e prazo estimado)
+- [ ] Alertas e notificações (orçamento ultrapassado, recorrentes não lançados no mês)
+- [ ] Responsividade mobile — ajustar formulários e tabelas para telas pequenas
 
 ---
 

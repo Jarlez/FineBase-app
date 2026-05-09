@@ -173,7 +173,7 @@ Page → store.action() → financeService() → Supabase API → state.push/upd
 
 ### DashboardPage.vue
 - Resumo do mês atual: entradas, gastos, saldo, taxa de economia, maior categoria
-- **Parcelamentos em andamento**: lista compacta com parcela X/Y calculada por diferença de meses, barra de progresso, data de término e total restante. 1 registro = toda a vida do parcelamento (o `amount` é o valor por parcela mensal)
+- **Parcelamentos em andamento**: agrupa registros com "Parcela X/Y" na descrição por `baseDesc + total + amount`, exibe o maior X como parcela atual, calcula restante e data de término dinamicamente — sem precisar que parcelas futuras existam na base. Suporta modelo antigo (1 registro, sem "Parcela X/Y" na descrição) via fallback de cálculo por data.
 - **Orçamento por categoria**: barra de progresso por categoria (verde < 80%, âmbar 80–100%, vermelho excedido), dialog "Gerenciar" para adicionar/remover limites — orçamento é fixo (mesmo valor todo mês)
 - Filtro por meses/ano, modo Gráficos vs Tabelas
 - Gráficos: pizza (categorias), barras (mês a mês), linha (saldo no ano), comparativo, tendência 12 meses
@@ -208,11 +208,13 @@ Page → store.action() → financeService() → Supabase API → state.push/upd
 - Formato esperado: `date,title,amount` (exportação padrão do app Nubank)
 - Parsing client-side com remoção de BOM, suporte a campos entre aspas
 - Auto-categorização por regex (`suggestCategory`) mapeando palavras-chave para as categorias do app
-- Detecção de parcelamentos: regex `/parcela\s+(\d+)\/(\d+)/i` extrai `installments` e seta `expense_type = 'parcelado'`
+- **Parcelamentos — modelo multi-registro**: ao detectar "Parcela X/Y" no título, gera X registros (um por parcela já ocorrida). A função `calcInstallmentDate(csvDateStr, currentN, targetN)` ajusta o mês preservando o dia original (com tratamento de fevereiro: `Math.min(day, lastDay)`). Descrição de cada registro: `"Base - Parcela N/Y"`.
 - Filtro automático: `amount > 0` são gastos; `amount <= 0` (ex: "Pagamento recebido") são ignorados com contador de aviso
-- Detecção de duplicatas: compara `date + amount` contra `finance.expenses` existente
+- **Detecção de duplicatas**: parcelados usam `description + amount` (a descrição já contém "Parcela X/Y", sendo única por parcela); demais gastos usam `date + amount`. Duplicatas são auto-desmarcadas e exibem badge "Já existe".
+- **Confirmação de duplicatas**: ao clicar em "Importar", se algum item selecionado for duplicata, abre dialog listando-os (descrição, data, valor). Usuário pode cancelar ou forçar a importação.
 - Preview editável: descrição e categoria ajustáveis antes de importar
 - Importação sequencial via `finance.addExpense()` com contador de progresso
+- **Parcelas futuras NÃO são criadas**: o sistema registra apenas as cobranças passadas (reais). O Dashboard projeta o restante dinamicamente. Criar parcelas futuras causaria dados incorretos se o parcelamento mudar.
 
 ### FilterCard.vue
 - Componente reutilizável usado em Expenses e Incomes
@@ -268,23 +270,25 @@ Isso evita que o skeleton apareça ao salvar/editar (quando `loading` é true ma
 ### Exportação CSV (Excel pt-BR)
 Usar BOM (`﻿`) no início e ponto-e-vírgula como separador — obrigatório para o Excel abrir corretamente em pt-BR. Vírgula como separador causa problemas com valores monetários no formato brasileiro.
 
-### Parcelamentos: 1 registro = todo o parcelamento
-O app armazena apenas 1 linha por compra parcelada. O campo `amount` é o valor da parcela mensal. A parcela atual é calculada dinamicamente pela diferença de meses entre `date` e hoje. O sistema não projeta parcelas futuras nos totais mensais.
+### Parcelamentos: modelo multi-registro (N registros por compra)
+O app armazena **1 registro por parcela já cobrada**. Ao importar "Parcela 6/10", são criados 6 registros com datas reais (mesmo dia do mês, meses ajustados). Cada registro aparece no mês correto na página de Gastos e nos totais do Dashboard.
 
-**Campos relevantes:** `installments` (total), `current_installment` (parcela no momento da importação — só metadado), `date` (data de início calculada — sempre dia 01).
+**Campos relevantes:** `installments` (total), `date` (data real da cobrança daquela parcela), `description` (contém "Parcela X/Y" — fonte da verdade do número atual).
 
-**Cálculo da parcela atual** (DashboardPage e ExpensesPage):
+**`calcInstallmentDate(csvDateStr, currentN, targetN)`**: calcula a data da parcela `targetN` sabendo que `currentN` foi cobrada em `csvDateStr`. Preserva o dia do mês; usa `Math.min(day, lastDay)` para fevereiro (ex: dia 29 → 28).
+
+**Coluna "Tipo" em ExpensesPage**: lê o número da parcela via regex na descrição:
 ```js
-const start = new Date(e.date + "T00:00:00") // CRÍTICO: sempre com T00:00:00
-const monthDiff = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
-const currentInstallment = Math.max(1, monthDiff + 1)
+const match = row.description?.match(/parcela\s+(\d+)\/(\d+)/i)
+if (match) return `Parcelado ${match[1]}/${match[2]}`
 ```
+Fallback para registros do modelo antigo (sem "Parcela X/Y" na descrição): calcula pela diferença de meses entre `date` e hoje.
 
-**Data de início na importação do CSV Nubank:** a data do CSV é ignorada. A data de início é calculada como `hoje - (parcela_atual - 1) meses`, sempre com dia 01 para evitar rollover de mês no JS (ex: 31/mar - 1 mês = 3/mar em vez de 28/fev).
+**Dashboard — agrupamento de parcelamentos**: `activeInstallments` agrupa registros pela chave `baseDesc + total + amount`, usa o maior X encontrado como parcela atual e calcula restante e data de término dinamicamente. Suporta os dois modelos.
 
-**Data de término:** usa `start.getMonth() + total` (sem -1) para mostrar o mês do pagamento da última fatura, não da cobrança.
+**Duplicatas na importação**: parcelados usam `description + amount` como chave (descrição já é única por parcela). Na próxima importação com "Parcela 7/10", as parcelas 1–6 aparecem como duplicatas e são auto-desmarcadas; só a 7/10 é nova.
 
-**Limitação:** como o registro tem a data de início do parcelamento, ele não aparece no filtro "Este mês" na página de Gastos se o início for em mês anterior. O Dashboard é o lugar correto para acompanhar parcelamentos ativos.
+**Por que NÃO criar parcelas futuras**: parcelas futuras ainda não foram cobradas. Criar registros adiantados causaria dados incorretos se o parcelamento mudar (cancelamento, renegociação). O Dashboard projeta o restante dinamicamente sem precisar desses registros.
 
 ### Parsing de datas: sempre usar T00:00:00
 `new Date("2026-02-01")` sem horário é interpretado como UTC meia-noite. No Brasil (UTC-3) isso vira 31 de janeiro — um mês errado. Sempre usar `new Date(dateString + "T00:00:00")` para forçar interpretação no fuso local. Esse bug causou "Parcela 5/12" aparecer em vez de "4/12".
@@ -303,7 +307,7 @@ O roadmap completo está em [ROADMAP.md](ROADMAP.md).
 
 ### MVP — Concluído ✅
 - [x] Orçamento por categoria com barra de progresso e alerta
-- [x] Visão de parcelamentos em andamento (parcela X/Y, valor, término)
+- [x] Visão de parcelamentos em andamento (parcela X/Y, valor, término, total restante)
 - [x] Gastos recorrentes / templates (lançar recorrência com 1 clique)
 - [x] Resumo do mês atual destacado no topo do Dashboard
 - [x] Empty states amigáveis em gráficos/tabelas sem dados
@@ -312,7 +316,7 @@ O roadmap completo está em [ROADMAP.md](ROADMAP.md).
 - [x] Indicador de saldo no header/sidebar (visível em todas as páginas)
 - [x] Exportação CSV dos gastos do período filtrado
 - [x] Gráfico de tendência de gastos (últimos 12 meses)
-- [x] Importar CSV do Nubank (com categorização automática e detecção de parcelas)
+- [x] Importar CSV do Nubank — categorização automática, detecção de parcelas, modelo multi-registro, confirmação de duplicatas
 
 ### Fase 2 — Pós-MVP
 - Autenticação completa (Supabase Auth)

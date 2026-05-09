@@ -19,9 +19,10 @@ import {
 
 function parseDate(dateString) {
   if (!dateString) return null
-  const d = new Date(dateString)
+  const d = new Date(dateString + 'T00:00:00')
   return Number.isNaN(d.getTime()) ? null : d
 }
+
 
 export const useFinanceStore = defineStore('finance', {
   state: () => ({
