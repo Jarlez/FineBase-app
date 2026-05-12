@@ -37,6 +37,7 @@ src/
 │   ├── DashboardPage.vue    # Análises, gráficos, parcelamentos, orçamentos
 │   ├── ExpensesPage.vue     # CRUD de gastos + importar/exportar CSV
 │   ├── IncomesPage.vue      # CRUD de entradas + cards estatísticos
+│   ├── MonthlyClosingPage.vue # Fechamento mensal consultivo com score e recomendações
 │   └── RecurringPage.vue    # CRUD de templates de gastos recorrentes
 ├── components/
 │   ├── FilterCard.vue       # Filtros reutilizáveis por período/categoria
@@ -130,6 +131,7 @@ src/
 | `/dashboard` | DashboardPage | Análise completa com gráficos |
 | `/gastos` | ExpensesPage | CRUD de gastos + importar/exportar CSV |
 | `/entradas` | IncomesPage | CRUD de entradas |
+| `/fechamento-mensal` | MonthlyClosingPage | Fechamento mensal com insights, alertas e score |
 | `/recorrentes` | RecurringPage | CRUD de templates recorrentes |
 
 ---
@@ -175,6 +177,7 @@ Page → store.action() → financeService() → Supabase API → state.push/upd
 - Resumo do mês atual: entradas, gastos, saldo, taxa de economia, maior categoria
 - **Parcelamentos em andamento**: agrupa registros com "Parcela X/Y" na descrição por `baseDesc + total + amount`, exibe o maior X como parcela atual, calcula restante e data de término dinamicamente — sem precisar que parcelas futuras existam na base. Suporta modelo antigo (1 registro, sem "Parcela X/Y" na descrição) via fallback de cálculo por data.
 - **Orçamento por categoria**: barra de progresso por categoria (verde < 80%, âmbar 80–100%, vermelho excedido), dialog "Gerenciar" para adicionar/remover limites — orçamento é fixo (mesmo valor todo mês)
+- **Ajuste de tema em textos de destaque**: no card de resumo, "Maior categoria" usa classe dinâmica (`text-grey-3` no dark e `text-grey-8` no light) com `useQuasar()` e `$q.dark.isActive`
 - Filtro por meses/ano, modo Gráficos vs Tabelas
 - Gráficos: pizza (categorias), barras (mês a mês), linha (saldo no ano), comparativo, tendência 12 meses
 - Modo comparativo quando 2+ meses selecionados
@@ -222,10 +225,24 @@ Page → store.action() → financeService() → Supabase API → state.push/upd
 - Presets: Hoje, Últimos 7 dias, Últimos 30 dias, Este Mês, Mês Passado, Últimos 3 meses, Últimos 6 meses
 - Emite: `update:dateRange` `{ start, end }`, `update:category`, `update:preset`
 
+### MonthlyClosingPage.vue
+- Tela dedicada de **fechamento mensal consultivo**, com seletor de mês/ano e carregamento inicial via skeleton
+- Cards principais: entradas, gastos, saldo e **Score mensal (0–100)** com barra de progresso e faixa de classificação
+- **Top categorias do mês**: ranking por valor, percentual do total e quantidade de lançamentos, com barra visual por categoria
+- **Formas de pagamento** em duas leituras:
+  - por valor total (impacto financeiro)
+  - por quantidade de uso (hábito/comportamento)
+  - inclui ticket médio por forma
+- **Estatísticas de comportamento**: total de lançamentos, ticket médio, maior gasto único, dia mais caro, média diária, categoria mais frequente, número de categorias usadas, parcelados no mês e fixo vs variável
+- **Pontos de atenção** com regras dinâmicas (concentração por categoria, concentração por forma de pagamento, saldo negativo, sem entradas, orçamento estourado, piora vs mês anterior, concentração por dia, peso de parcelas futuras, alerta/elogio de score e evolução)
+- **Recomendações do mês** com sugestões acionáveis (ex.: reduzir 10% da categoria líder, revisar entradas faltantes, cautela com crédito, reforço positivo quando não há estouro)
+- **Resumo consultivo** em linguagem de produto, combinando volume, impacto, forma dominante, ticket médio, orçamento, parcelas futuras e comparação com mês anterior (melhorou/piorou)
+- Reaproveita os getters da `financeStore` e segue a regra de parsing local com `T00:00:00`
+
 ### App.vue
 - Layout com `q-layout`, drawer lateral fixo (260px, mini mode)
 - Header com título e toggle do drawer
-- Sidebar com 4 itens de menu (Dashboard, Gastos, Entradas, Recorrentes)
+- Sidebar com 5 itens de menu (Dashboard, Gastos, Entradas, Fechamento mensal, Recorrentes)
 - Widget de saldo do mês atual no rodapé do sidebar (oculta no mini mode, ícone com tooltip)
 
 ---
@@ -295,6 +312,15 @@ Fallback para registros do modelo antigo (sem "Parcela X/Y" na descrição): cal
 
 ### Orçamentos: limite fixo mensal
 A tabela `budgets` tem `category` como UNIQUE. O upsert substitui o limite existente ao salvar para a mesma categoria. O limite vale para todos os meses (não por mês específico), mantendo a configuração simples.
+
+### Fechamento mensal consultivo e score
+A página `MonthlyClosingPage.vue` consolida os dados do mês e do mês anterior para transformar o app em visão de consultoria financeira prática.
+
+**Score mensal (0–100):** calculado por regras ponderadas (saldo, taxa de economia, concentração de categoria, concentração de pagamento, estouro de orçamento, peso de parcelas futuras, tendência de gastos e proporção de parcelados), com clamp entre 0 e 100.
+
+**Objetivo do score:** oferecer leitura rápida de saúde financeira do mês sem esconder os detalhes (as regras continuam transparentes nos blocos de alertas e resumo).
+
+**Comparações temporais:** tendências (`expenseTrend` e `balanceTrend`) usam mês anterior para indicar melhora/piora.
 
 ### Reatividade com objetos dinâmicos (launching)
 Para não perder reatividade ao atualizar chaves de um objeto ref, usar cópia: `launching.value = { ...launching.value, [id]: true }` em vez de `launching.value[id] = true`.
