@@ -170,6 +170,7 @@ export const useFinanceStore = defineStore('finance', {
 
   actions: {
     async loadData() {
+      if (this.loading) return
       this.loading = true
       this.error = null
       try {

@@ -3,7 +3,7 @@
 ## Visão Geral
 Aplicação web de gestão financeira pessoal. O usuário cadastra **gastos** e **entradas** e acompanha as finanças via **dashboard analítico** com gráficos e tabelas comparativas.
 
-**Status:** MVP concluído — CRUD completo, dashboard analítico, importação de CSV do Nubank, orçamentos, parcelamentos, gastos recorrentes. Sem autenticação por usuário ainda.
+**Status:** MVP concluído — CRUD completo, dashboard analítico, importação de CSV do Nubank, orçamentos, parcelamentos, gastos recorrentes, fechamento mensal consultivo, tela de Score. Sem autenticação por usuário ainda.
 
 ---
 
@@ -38,6 +38,7 @@ src/
 │   ├── ExpensesPage.vue     # CRUD de gastos + importar/exportar CSV
 │   ├── IncomesPage.vue      # CRUD de entradas + cards estatísticos
 │   ├── MonthlyClosingPage.vue # Fechamento mensal consultivo com score e recomendações
+│   ├── ScorePage.vue        # Tela dedicada ao score: gauge, faixas, critérios, histórico 12m, dicas
 │   └── RecurringPage.vue    # CRUD de templates de gastos recorrentes
 ├── components/
 │   ├── FilterCard.vue       # Filtros reutilizáveis por período/categoria
@@ -133,6 +134,7 @@ src/
 | `/entradas` | IncomesPage | CRUD de entradas |
 | `/fechamento-mensal` | MonthlyClosingPage | Fechamento mensal com insights, alertas e score |
 | `/recorrentes` | RecurringPage | CRUD de templates recorrentes |
+| `/score` | ScorePage | Tela dedicada ao score: gauge, faixas, critérios, histórico 12m, dicas |
 
 ---
 
@@ -227,22 +229,37 @@ Page → store.action() → financeService() → Supabase API → state.push/upd
 
 ### MonthlyClosingPage.vue
 - Tela dedicada de **fechamento mensal consultivo**, com seletor de mês/ano e carregamento inicial via skeleton
-- Cards principais: entradas, gastos, saldo e **Score mensal (0–100)** com barra de progresso e faixa de classificação
+- Cards principais: entradas, gastos, saldo e **Score mensal (0–100)** com barra vertical e ícone info com tooltip
 - **Top categorias do mês**: ranking por valor, percentual do total e quantidade de lançamentos, com barra visual por categoria
 - **Formas de pagamento** em duas leituras:
   - por valor total (impacto financeiro)
   - por quantidade de uso (hábito/comportamento)
   - inclui ticket médio por forma
 - **Estatísticas de comportamento**: total de lançamentos, ticket médio, maior gasto único, dia mais caro, média diária, categoria mais frequente, número de categorias usadas, parcelados no mês e fixo vs variável
-- **Pontos de atenção** com regras dinâmicas (concentração por categoria, concentração por forma de pagamento, saldo negativo, sem entradas, orçamento estourado, piora vs mês anterior, concentração por dia, peso de parcelas futuras, alerta/elogio de score e evolução)
-- **Recomendações do mês** com sugestões acionáveis (ex.: reduzir 10% da categoria líder, revisar entradas faltantes, cautela com crédito, reforço positivo quando não há estouro)
-- **Resumo consultivo** em linguagem de produto, combinando volume, impacto, forma dominante, ticket médio, orçamento, parcelas futuras e comparação com mês anterior (melhorou/piorou)
-- Reaproveita os getters da `financeStore` e segue a regra de parsing local com `T00:00:00`
+- **Pontos de atenção** com regras dinâmicas (via `ATTENTION_RULES` no composable)
+- **Recomendações do mês** com sugestões acionáveis (via `RECOMMENDATION_RULES` no composable)
+- **Resumo consultivo** em linguagem de produto
+- **Histórico do score** (6 meses) + **Composição dos gastos** (fixo/variável/parcelado)
+- Botão **Exportar PDF** via jsPDF
+- Todo o lógica analítica extraída para `useMonthlyClosing.js`
+
+### ScorePage.vue
+- Tela dedicada ao score financeiro, acessível via `/score` e menu lateral
+- **Gauge SVG** — semi-círculo colorido preenchido de acordo com o score (cálculo via arco SVG dinâmico)
+- **Faixas de classificação** — 4 bandas (Excelente 85–100, Bom 70–84, Atenção 55–69, Crítico 0–54), com a faixa ativa destacada
+- **Como é calculado** — grade 2 colunas com os 8 critérios do score, cada um mostrando:
+  - Ícone, nome, descrição do que mede
+  - Badge de penalidade atual (`−X pts`) ou bônus (`+X pts`) ou `OK`
+  - Barra de impacto (0% a 100% da penalidade máxima), colorida por status
+  - Hint contextualizado com os dados reais do mês
+- **Histórico 12 meses** — gráfico de linha via `scoreHistoryLong` (mais amplo que os 6 meses do fechamento)
+- **Dicas personalizadas** — filtra `scoreFactors` onde `penalty > 0` ou `status === 'warning'`, ordenado por impacto
+- Usa `useMonthlyClosing` com os novos exports `scoreFactors` e `scoreHistoryLong`
 
 ### App.vue
 - Layout com `q-layout`, drawer lateral fixo (260px, mini mode)
 - Header com título e toggle do drawer
-- Sidebar com 5 itens de menu (Dashboard, Gastos, Entradas, Fechamento mensal, Recorrentes)
+- Sidebar com itens: Dashboard, Gastos, Entradas, Fechamento mensal, Recorrentes + Orçamentos (dialog) + **Score** (rota `/score`)
 - Widget de saldo do mês atual no rodapé do sidebar (oculta no mini mode, ícone com tooltip)
 
 ---
@@ -314,11 +331,34 @@ Fallback para registros do modelo antigo (sem "Parcela X/Y" na descrição): cal
 A tabela `budgets` tem `category` como UNIQUE. O upsert substitui o limite existente ao salvar para a mesma categoria. O limite vale para todos os meses (não por mês específico), mantendo a configuração simples.
 
 ### Fechamento mensal consultivo e score
-A página `MonthlyClosingPage.vue` consolida os dados do mês e do mês anterior para transformar o app em visão de consultoria financeira prática.
 
-**Score mensal (0–100):** calculado por regras ponderadas (saldo, taxa de economia, concentração de categoria, concentração de pagamento, estouro de orçamento, peso de parcelas futuras, tendência de gastos e proporção de parcelados), com clamp entre 0 e 100.
+**Toda a lógica analítica** está em `src/composables/useMonthlyClosing.js`. A `MonthlyClosingPage.vue` e a `ScorePage.vue` são consumers do composable.
 
-**Objetivo do score:** oferecer leitura rápida de saúde financeira do mês sem esconder os detalhes (as regras continuam transparentes nos blocos de alertas e resumo).
+**Score mensal (0–100):** função pura `computeScore(data)` com os 8 critérios abaixo. Clamp entre 0 e 100.
+
+| Critério | Penalidade | Bônus |
+|----------|-----------|-------|
+| Sem entradas | −25 | — |
+| Saldo negativo | −30 | — |
+| Taxa de economia < 10% | −10 | — |
+| Categoria dominante ≥ 40% | −12 | — |
+| Categoria dominante ≥ 30% | −6 | — |
+| Pagamento dominante ≥ 70% | −10 | — |
+| Pagamento dominante ≥ 60% | −5 | — |
+| Orçamento estourado | −15 | — |
+| Parcelas futuras ≥ 150% dos gastos | −10 | — |
+| Parcelas futuras ≥ 80% dos gastos | −5 | — |
+| Gastos subiram ≥ 20% vs. anterior | −10 | — |
+| Gastos subiram ≥ 10% vs. anterior | −6 | — |
+| Gastos caíram ≥ 10% vs. anterior | — | +4 |
+| Proporção de parcelados ≥ 40% | −5 | — |
+
+**`scoreFactors`** — computed que expõe cada critério com `{ id, label, icon, description, maxPenalty, penalty, bonus, status, hint }`. Usado pela `ScorePage` para renderizar a grade "Como é calculado" e as dicas personalizadas.
+
+**`scoreHistory`** — 6 meses (usado no `MonthlyClosingPage`).
+**`scoreHistoryLong`** — 12 meses (usado no `ScorePage`).
+
+**`calculateScoreForMonth(month, year, finance)`** — versão simplificada do score para histórico (sem `futureInstallmentsRatio` e `expenseTrend`, que dependem de dados dinâmicos de `now`).
 
 **Comparações temporais:** tendências (`expenseTrend` e `balanceTrend`) usam mês anterior para indicar melhora/piora.
 
@@ -343,6 +383,8 @@ O roadmap completo está em [ROADMAP.md](ROADMAP.md).
 - [x] Exportação CSV dos gastos do período filtrado
 - [x] Gráfico de tendência de gastos (últimos 12 meses)
 - [x] Importar CSV do Nubank — categorização automática, detecção de parcelas, modelo multi-registro, confirmação de duplicatas
+- [x] Fechamento mensal consultivo — score, pontos de atenção, recomendações, resumo, PDF export
+- [x] Tela de Score — gauge SVG, faixas, critérios detalhados, histórico 12 meses, dicas personalizadas
 
 ### Fase 2 — Pós-MVP
 - Autenticação completa (Supabase Auth)

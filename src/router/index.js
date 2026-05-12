@@ -4,6 +4,7 @@ import ExpensesPage from '../pages/ExpensesPage.vue'
 import IncomesPage from '../pages/IncomesPage.vue'
 import MonthlyClosingPage from '../pages/MonthlyClosingPage.vue'
 import RecurringPage from '../pages/RecurringPage.vue'
+import ScorePage from '../pages/ScorePage.vue'
 
 const routes = [
   {
@@ -34,6 +35,11 @@ const routes = [
     path: '/fechamento-mensal',
     name: 'monthly-closing',
     component: MonthlyClosingPage,
+  },
+  {
+    path: '/score',
+    name: 'score',
+    component: ScorePage,
   },
 ]
 

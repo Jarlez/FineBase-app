@@ -1,0 +1,51 @@
+export const SEARCH_INDEX = [
+  {
+    label: 'Dashboard',
+    description: 'Análises, gráficos, parcelamentos e orçamentos',
+    icon: 'dashboard',
+    to: '/dashboard',
+    keywords: 'dashboard análise gráfico resumo parcelamento orçamento saldo',
+  },
+  {
+    label: 'Gastos',
+    description: 'Registre e gerencie seus gastos',
+    icon: 'trending_down',
+    to: '/gastos',
+    keywords: 'gasto despesa importar csv nubank extrato adicionar',
+  },
+  {
+    label: 'Entradas',
+    description: 'Registre suas fontes de renda',
+    icon: 'trending_up',
+    to: '/entradas',
+    keywords: 'entrada renda salário receita adicionar',
+  },
+  {
+    label: 'Recorrentes',
+    description: 'Templates de gastos fixos mensais',
+    icon: 'repeat',
+    to: '/recorrentes',
+    keywords: 'recorrente template fixo mensal academia streaming aluguel',
+  },
+  {
+    label: 'Fechamento mensal',
+    description: 'Análise consultiva com score e recomendações',
+    icon: 'fact_check',
+    to: '/fechamento-mensal',
+    keywords: 'fechamento mensal score análise recomendação consultivo pdf',
+  },
+  {
+    label: 'Score',
+    description: 'Sua nota financeira com critérios e histórico',
+    icon: 'military_tech',
+    to: '/score',
+    keywords: 'score nota critério histórico dica financeiro gauge',
+  },
+  {
+    label: 'Orçamentos',
+    description: 'Defina limites de gasto por categoria',
+    icon: 'savings',
+    action: 'openBudgets',
+    keywords: 'orçamento limite categoria meta controle',
+  },
+]

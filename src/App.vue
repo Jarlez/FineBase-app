@@ -21,7 +21,7 @@
         <q-space />
 
         <div class="app-header-right">
-          <div class="app-search">
+          <div class="app-search" role="button" tabindex="0" @click="searchOpen = true" @keydown.enter="searchOpen = true">
             <q-icon name="search" size="13px" />
             <span>Buscar</span>
             <kbd>⌘K</kbd>
@@ -93,6 +93,21 @@
         </button>
       </div>
 
+      <!-- Score -->
+      <div class="side-nav">
+        <router-link to="/score" custom v-slot="{ isActive, navigate }">
+          <button
+            class="side-item"
+            :class="{ 'is-active': isActive }"
+            @click="navigate"
+          >
+            <q-icon name="military_tech" size="16px" class="side-item-icon" />
+            <span v-if="!isMini" class="side-item-label">Score</span>
+            <q-tooltip v-if="isMini" anchor="center right" self="center left">Score</q-tooltip>
+          </button>
+        </router-link>
+      </div>
+
       <!-- Balance widget (full mode) -->
       <div v-if="!isMini" class="side-balance">
         <div class="side-balance-header">{{ currentMonthYearLabel }}</div>
@@ -144,6 +159,9 @@
     <q-page-container class="app-page-container">
       <router-view />
     </q-page-container>
+
+    <!-- ─── Search palette ───────────────────────────────────────── -->
+    <SearchDialog v-model="searchOpen" @open-budgets="budgetOpen = true" />
 
     <!-- ─── Dialog de Orçamentos ────────────────────────────────── -->
     <BudgetDialog v-model="budgetOpen" />
@@ -568,22 +586,38 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
-import { Dark } from 'quasar'
+import { Dark, useQuasar } from 'quasar'
 import { useFinanceStore } from './stores/financeStore'
 import BudgetDialog from './components/BudgetDialog.vue'
+import SearchDialog from './components/SearchDialog.vue'
 
 const route = useRoute()
 const finance = useFinanceStore()
+const $q = useQuasar()
 
 const isMini = ref(false)
 const isDark = ref(false)
 const helpOpen = ref(false)
 const supportOpen = ref(false)
 const budgetOpen = ref(false)
+const searchOpen = ref(false)
 
 provide('openBudgetDialog', () => { budgetOpen.value = true })
+
+watch(() => finance.error, (err) => {
+  if (err) {
+    $q.notify({ type: 'negative', message: err, timeout: 5000, position: 'top' })
+  }
+})
+
+function handleSearchShortcut(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    searchOpen.value = true
+  }
+}
 
 const PAGE_NAMES = {
   dashboard:  'Dashboard',
@@ -591,6 +625,7 @@ const PAGE_NAMES = {
   incomes:    'Entradas',
   recurring:  'Recorrentes',
   'monthly-closing': 'Fechamento mensal',
+  score: 'Score',
 }
 
 const currentPageName = computed(() => PAGE_NAMES[route.name] || 'FineBase')
@@ -664,6 +699,12 @@ onMounted(() => {
     Dark.set(true)
     document.documentElement.classList.add('dark')
   }
+  window.addEventListener('keydown', handleSearchShortcut)
+  finance.loadData()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleSearchShortcut)
 })
 </script>
 
@@ -720,7 +761,14 @@ onMounted(() => {
   color: var(--text-3);
   font-size: 13px;
   width: 200px;
-  cursor: default;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s, background 0.12s;
+
+  &:hover {
+    border-color: var(--accent);
+    background: var(--bg-soft);
+  }
 }
 .app-search kbd {
   margin-left: auto;
