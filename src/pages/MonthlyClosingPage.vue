@@ -17,7 +17,7 @@
           rounded
           style="border: 1px solid var(--border)"
           class="bg-white text-secondary q-mr-lg"
-          :disable="isInitialLoading"
+          :disable="isInitialLoading || !hasEnoughData"
           @click="exportPdf"
         />
         <q-select
@@ -81,6 +81,8 @@
     </template>
 
     <template v-else>
+      <div class="closing-content-wrap" :class="{ 'is-locked': !hasEnoughData }">
+      <div class="closing-content-inner">
       <!-- ── stat cards ─────────────────────────────────────── -->
       <div class="row q-col-gutter-md q-mb-md">
         <div class="col-12 col-sm-6 col-md-3">
@@ -490,6 +492,39 @@
           </q-card>
         </div>
       </div>
+      </div><!-- closing-content-inner -->
+
+      <!-- ── Gate overlay ────────────────────────────────────── -->
+      <div v-if="!hasEnoughData" class="closing-gate">
+        <div class="closing-gate__card">
+          <q-icon name="insert_chart_outlined" size="48px" class="closing-gate__icon" />
+          <div class="closing-gate__title">Dados insuficientes para análise</div>
+          <p class="closing-gate__text">
+            Registre pelo menos <strong>3 gastos</strong> em
+            <strong>{{ periodLabel }}</strong> para ver o fechamento mensal completo
+            com score, categorias e recomendações.
+          </p>
+          <div class="closing-gate__actions">
+            <q-btn
+              label="Registrar gastos"
+              unelevated no-caps rounded
+              color="primary"
+              icon="trending_down"
+              to="/gastos"
+            />
+            <q-btn
+              label="Registrar entradas"
+              unelevated no-caps rounded
+              outline
+              color="primary"
+              icon="trending_up"
+              to="/entradas"
+            />
+          </div>
+        </div>
+      </div>
+
+      </div><!-- closing-content-wrap -->
     </template>
   </q-page>
 </template>
@@ -571,7 +606,9 @@ const {
 const isInitialLoading = computed(() => {
   const hasNoData = !finance.expenses.length && !finance.incomes.length;
   return finance.loading && hasNoData;
-});
+})
+
+const hasEnoughData = computed(() => totalExpenseTransactions.value >= 3);
 
 const scoreBarCssColor = computed(() => {
   const map = { positive: '#059669', warning: '#d97706', negative: '#dc2626' }
@@ -960,5 +997,70 @@ onMounted(() => {
     grid-template-columns: minmax(0, 1.4fr) 1fr 0.9fr 0.7fr;
     font-size: 11px;
   }
+}
+
+/* ── Data gate ─────────────────────────────────────────── */
+.closing-content-wrap {
+  position: relative;
+}
+
+.is-locked .closing-content-inner {
+  filter: blur(5px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.closing-gate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 10;
+  padding: 24px;
+}
+
+.closing-gate__card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 44px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+  max-width: 440px;
+  width: 100%;
+}
+
+.closing-gate__icon {
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.closing-gate__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.closing-gate__text {
+  font-size: 14px;
+  color: var(--text-3);
+  line-height: 1.65;
+  margin: 0 0 24px;
+}
+
+.closing-gate__text strong {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.closing-gate__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 </style>

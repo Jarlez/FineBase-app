@@ -132,34 +132,68 @@
 
       <div v-else class="row q-col-gutter-md">
         <div v-for="template in finance.recurringTemplates" :key="template.id" class="col-12 col-sm-6 col-md-4">
-          <q-card flat class="template-card rounded-borders">
-            <q-card-section>
-              <div class="row items-start justify-between no-wrap">
-                <div class="column" style="min-width: 0">
-                  <div class="text-subtitle2 text-weight-medium ellipsis">{{ template.description }}</div>
-                  <div class="text-caption text-grey-6">{{ template.category || 'Sem categoria' }}</div>
-                  <div class="text-h6 text-weight-bold text-negative q-mt-xs">{{ formatMoney(template.amount) }}</div>
-                  <div v-if="template.payment_method" class="text-caption text-grey-5">{{ template.payment_method }}</div>
-                </div>
-                <div class="column q-gutter-xs q-ml-sm flex-shrink-0">
-                  <q-btn flat dense round icon="edit" color="grey-7" size="sm" @click="openEditModal(template)" />
-                  <q-btn flat dense round icon="delete" color="negative" size="sm" @click="openDeleteDialog(template)" />
+          <div class="template-card">
+            <div class="tc-body">
+              <div class="tc-icon">
+                <q-icon name="repeat" size="16px" />
+              </div>
+
+              <div class="tc-info">
+                <div class="tc-description">{{ template.description }}</div>
+                <div class="tc-meta">
+                  <span v-if="template.category" class="tc-tag" :style="categoryTagStyle(template.category)">
+                    {{ template.category }}
+                  </span>
+                  <span v-if="template.payment_method" class="tc-payment">
+                    {{ paymentLabel(template.payment_method) }}
+                  </span>
+                  <span v-if="template.location" class="tc-location">
+                    <q-icon name="location_on" size="11px" />{{ template.location }}
+                  </span>
                 </div>
               </div>
-            </q-card-section>
-            <q-separator />
-            <q-card-actions>
+
+              <div class="tc-amount-wrap">
+                <div class="tc-amount-label">Valor mensal</div>
+                <div class="tc-amount">{{ formatMoney(template.amount) }}</div>
+              </div>
+            </div>
+
+            <div class="tc-footer">
               <q-btn
-                flat
                 no-caps
-                icon="add_task"
+                unelevated
+                rounded
                 color="primary"
-                label="Lançar este mês"
-                :loading="launching[template.id]"
+                icon="add_task"
+                :label="launching[template.id] ? 'Lançando...' : 'Lançar este mês'"
+                :loading="!!launching[template.id]"
+                class="tc-launch-btn"
                 @click="launchThisMonth(template)"
               />
-            </q-card-actions>
-          </q-card>
+
+              <div class="tc-actions">
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="edit"
+                  color="grey-7"
+                  size="sm"
+                  @click="openEditModal(template)"
+                />
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="delete"
+                  color="grey-7"
+                  size="sm"
+                  @click="openDeleteDialog(template)"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -308,6 +342,26 @@ async function launchThisMonth(template) {
 const formatMoney = (value) =>
   Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+const paymentLabel = (value) => {
+  const map = { debito: 'Débito', credito: 'Crédito', pix: 'Pix', dinheiro: 'Dinheiro' }
+  return map[value] ?? value
+}
+
+const CATEGORY_COLORS = {
+  Assinaturas: '#8d6e63', Casa: '#ef5350', Compras: '#5c6bc0', Delivery: '#ff7043',
+  Doações: '#26a69a', Educação: '#42a5f5', Empréstimos: '#ab47bc', Imprevistos: '#ef9a9a',
+  Investimentos: '#66bb6a', Lazer: '#26c6da', 'Reserva de emergência': '#fbc02d',
+  Saúde: '#ba68c8', Supermercado: '#7cb342', Transporte: '#fb8c00',
+}
+
+function categoryTagStyle(category) {
+  const color = CATEGORY_COLORS[category] ?? '#94a3b8'
+  return {
+    background: `${color}18`,
+    color,
+  }
+}
+
 onMounted(() => {
   if (!finance.expenses.length) {
     finance.loadData()
@@ -318,12 +372,130 @@ onMounted(() => {
 <style scoped>
 .page-recurring { padding: 20px 24px; }
 
+/* ── Template card ─────────────────────────────────────── */
 .template-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   transition: box-shadow .15s;
+  overflow: hidden;
 }
-.template-card:hover { box-shadow: var(--shadow-md); }
+
+
+.tc-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+}
+
+.tc-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--bg-soft);
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tc-description {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tc-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.tc-tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+.tc-payment {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+  background: var(--bg-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft);
+}
+
+.tc-location {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  color: var(--text-4);
+}
+
+.tc-amount-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.tc-amount-label {
+  font-size: 10px;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+}
+
+.tc-amount {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* ── Footer ────────────────────────────────────────────── */
+.tc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-soft);
+  gap: 8px;
+}
+
+.tc-launch-btn {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tc-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 </style>

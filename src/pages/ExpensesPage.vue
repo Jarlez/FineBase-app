@@ -168,7 +168,8 @@
                 no-caps
                 icon="save"
                 type="submit"
-                :loading="finance.loading"
+                :loading="submitting"
+                :disable="submitting"
               />
             </div>
           </q-form>
@@ -225,10 +226,10 @@
             <div class="stat-card__body">
               <span class="stat-card__label">Maior Categoria</span>
               <span class="stat-card__top-category">
-                {{ topCategoryName }}
+                {{ topCategoryName  }}
               </span>
               <span class="stat-card__subtext">
-                {{ topCategorySubtext }}
+                {{ topCategorySubtext }} do total
               </span>
             </div>
           </q-card-section>
@@ -368,6 +369,7 @@
             dense
             icon="edit"
             color="grey-7"
+            :disable="deletingId === props.row.id"
             @click="
               startEdit(props.row);
               formModalOpen = true;
@@ -380,6 +382,8 @@
             dense
             icon="delete"
             color="grey-7"
+            :loading="deletingId === props.row.id"
+            :disable="deletingId === props.row.id"
             @click="removeExpense(props.row)"
           />
         </q-td>
@@ -609,7 +613,7 @@ const topCategoryName = computed(() => topCategoryData.value?.name ?? "–");
 const topCategorySubtext = computed(() => {
   const d = topCategoryData.value;
   if (!d) return "";
-  return `${formatCurrency(d.amount)} (${d.percent}% do total)`;
+  return `${formatCurrency(d.amount)} (${d.percent}%)`;
 });
 
 const mostUsedPayment = computed(() => {
@@ -846,6 +850,8 @@ const editingId = ref(null);
 const formModalOpen = ref(false);
 const detailsModalOpen = ref(false);
 const selectedExpenseForDetails = ref(null);
+const submitting = ref(false);
+const deletingId = ref(null);
 
 const isEditing = computed(() => editingId.value !== null);
 const isInitialLoading = computed(
@@ -888,6 +894,7 @@ function onReset() {
 }
 
 async function onSubmit() {
+  if (submitting.value) return;
   const payload = {
     date: form.date,
     description: form.description,
@@ -900,6 +907,7 @@ async function onSubmit() {
       form.expense_type === "parcelado" ? Number(form.installments || 0) : null,
   };
 
+  submitting.value = true;
   try {
     if (isEditing.value && editingId.value) {
       await finance.editExpense(editingId.value, payload);
@@ -921,6 +929,8 @@ async function onSubmit() {
       type: "negative",
       message: error.message || "Erro ao salvar gasto.",
     });
+  } finally {
+    submitting.value = false;
   }
 }
 
@@ -951,6 +961,7 @@ async function removeExpense(row) {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
+    deletingId.value = row.id;
     try {
       await finance.removeExpense(row.id);
       $q.notify({
@@ -962,6 +973,8 @@ async function removeExpense(row) {
         type: "negative",
         message: error.message || "Erro ao excluir gasto.",
       });
+    } finally {
+      deletingId.value = null;
     }
   });
 }
@@ -1087,7 +1100,7 @@ onMounted(() => {
   color: var(--pos);
 }
 .stat-card__top-category {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text);
 }

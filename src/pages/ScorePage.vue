@@ -51,6 +51,8 @@
     </template>
 
     <template v-else>
+      <div class="score-content-wrap" :class="{ 'is-locked': !hasEnoughData }">
+      <div class="score-content-inner">
       <!-- ── Row 1: Hero + Faixas ────────────────────────────────── -->
       <div class="row q-col-gutter-md q-mb-md items-stretch">
         <!-- Hero score -->
@@ -238,6 +240,28 @@
           </q-card>
         </div>
       </div>
+      </div><!-- score-content-inner -->
+
+      <!-- ── Gate overlay ──────────────────────────────────────────── -->
+      <div v-if="!hasEnoughData" class="score-gate">
+        <div class="score-gate__card">
+          <q-icon name="insert_chart_outlined" size="48px" class="score-gate__icon" />
+          <div class="score-gate__title">Score indisponível</div>
+          <p class="score-gate__text">
+            Registre pelo menos <strong>3 gastos</strong> em
+            <strong>{{ periodLabel }}</strong> para calcular seu score financeiro.
+          </p>
+          <q-btn
+            label="Registrar gastos"
+            unelevated no-caps rounded
+            color="primary"
+            icon="trending_down"
+            to="/gastos"
+          />
+        </div>
+      </div>
+
+      </div><!-- score-content-wrap -->
     </template>
   </q-page>
 </template>
@@ -291,12 +315,15 @@ const {
   monthlyScoreLabel,
   scoreFactors,
   scoreHistoryLong,
+  totalExpenseTransactions,
 } = useMonthlyClosing(selectedMonth, selectedYear)
 
 const isInitialLoading = computed(() => {
   const hasNoData = !finance.expenses.length && !finance.incomes.length
   return finance.loading && hasNoData
 })
+
+const hasEnoughData = computed(() => totalExpenseTransactions.value >= 3)
 
 // Mapeamento de cor Quasar → hex
 const COLOR_MAP = { positive: '#059669', info: '#0ea5e9', warning: '#d97706', negative: '#dc2626' }
@@ -642,5 +669,63 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--text-3);
   line-height: 1.45;
+}
+
+// ── Data gate ──────────────────────────────────────────────────────
+.score-content-wrap {
+  position: relative;
+}
+
+.is-locked .score-content-inner {
+  filter: blur(5px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.score-gate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 10;
+  padding: 24px;
+}
+
+.score-gate__card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 44px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+  max-width: 420px;
+  width: 100%;
+}
+
+.score-gate__icon {
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.score-gate__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.score-gate__text {
+  font-size: 14px;
+  color: var(--text-3);
+  line-height: 1.65;
+  margin: 0 0 24px;
+
+  strong {
+    color: var(--text-2);
+    font-weight: 600;
+  }
 }
 </style>

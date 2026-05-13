@@ -352,6 +352,15 @@ export const useFinanceStore = defineStore('finance', {
         this.loading = false
       }
     },
+
+    clearData() {
+      this.expenses = []
+      this.incomes = []
+      this.budgets = []
+      this.recurringTemplates = []
+      this.loading = false
+      this.error = null
+    },
   },
 })
 

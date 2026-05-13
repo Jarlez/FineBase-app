@@ -72,7 +72,7 @@
                   rounded
                 />
               </div>
-              <div class="row q-col-gutter-md">
+              <div class="row q-col-gutter-md q-pt-md">
                 <div class="col-12 col-sm-3">
                   <div class="text-caption text-grey-6">Entradas</div>
                   <div class="text-h6 text-weight-bold text-positive">
@@ -105,7 +105,7 @@
                     :class="$q.dark.isActive ? 'text-grey-3' : 'text-grey-8'"
                   >
                     {{
-                      currentMonthTopCategory ? currentMonthTopCategory[0] : "–"
+                      currentMonthTopCategory ? currentMonthTopCategory[0] : "-"
                     }}
                   </div>
                   <div
@@ -141,7 +141,7 @@
               </div>
 
               <!-- Resumo por forma de pagamento -->
-              <div class="q-mt-lg">
+              <div class="q-mt-xl">
                 <div class="text-caption text-grey-5 q-mb-sm">Por forma de pagamento</div>
                 <div class="row q-col-gutter-sm">
                   <div
@@ -260,9 +260,18 @@
             </div>
             <div
               v-if="!activeInstallments.length"
-              class="text-caption text-grey-5 q-py-md text-center"
+              class="installments-empty text-caption text-grey-5"
             >
-              Nenhum parcelamento em andamento
+              <span>Nenhum parcelamento em andamento.</span>
+              <q-btn
+                flat
+                dense
+                no-caps
+                size="sm"
+                color="primary"
+                label="Configurar agora"
+                @click="router.push('/gastos')"
+              />
             </div>
             <div v-else class="installments-list">
               <div
@@ -433,29 +442,40 @@
             <q-card-section class="dashboard-card__chart-section">
               <template v-if="isCompareMonths">
                 <Bar
-                  v-if="categoryCompareBarData.labels.length"
+                  v-if="
+                    categoryCompareBarData.labels.length &&
+                    categoryCompareBarData.datasets.some((dataset) =>
+                      dataset.data.some((value) => Number(value || 0) > 0)
+                    )
+                  "
                   :data="categoryCompareBarData"
                   :options="barOptions"
                 />
                 <div
                   v-else
-                  class="text-caption text-grey-6 text-center q-py-xl"
+                  class="dashboard-empty-state q-py-xl"
                 >
-                  Nenhum dado para exibir
+                  <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                  <span>Sem dados no período selecionado.</span>
                 </div>
               </template>
               <template v-else>
                 <div
-                  v-if="pieData.datasets[0].data.length"
+                  v-if="
+                    pieData.datasets[0]?.data?.some(
+                      (value) => Number(value || 0) > 0
+                    )
+                  "
                   class="chart-pie-wrap"
                 >
                   <Pie :data="pieData" :options="pieOptions" />
                 </div>
                 <div
                   v-else
-                  class="text-caption text-grey-6 text-center q-py-xl"
+                  class="dashboard-empty-state q-py-xl"
                 >
-                  Nenhum dado para exibir
+                  <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                  <span>Sem dados no período selecionado.</span>
                 </div>
               </template>
             </q-card-section>
@@ -470,7 +490,19 @@
               <div class="stat-card__label">Gastos por mês</div>
             </q-card-section>
             <q-card-section class="dashboard-card__chart-section">
-              <Bar :data="barByMonthData" :options="barOptions" />
+              <Bar
+                v-if="
+                  barByMonthData.datasets[0]?.data?.some(
+                    (value) => Number(value || 0) > 0
+                  )
+                "
+                :data="barByMonthData"
+                :options="barOptions"
+              />
+              <div v-else class="dashboard-empty-state q-py-xl">
+                <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                <span>Sem dados no período selecionado.</span>
+              </div>
             </q-card-section>
           </q-card>
         </div>
@@ -489,16 +521,22 @@
               <Bar
                 v-if="
                   isCompareMonths
-                    ? dayCompareBarData.labels.length
-                    : barByDayOfMonthData.datasets[0].data.length
+                    ? dayCompareBarData.labels.length &&
+                      dayCompareBarData.datasets.some((dataset) =>
+                        dataset.data.some((value) => Number(value || 0) > 0)
+                      )
+                    : barByDayOfMonthData.datasets[0]?.data?.some(
+                        (value) => Number(value || 0) > 0
+                      )
                 "
                 :data="
                   isCompareMonths ? dayCompareBarData : barByDayOfMonthData
                 "
                 :options="barOptions"
               />
-              <div v-else class="text-caption text-grey-6 text-center q-py-xl">
-                Nenhum dado para exibir
+              <div v-else class="dashboard-empty-state q-py-xl">
+                <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                <span>Sem dados no período selecionado.</span>
               </div>
             </q-card-section>
           </q-card>
@@ -512,7 +550,19 @@
               <div class="stat-card__label">Saldo no ano</div>
             </q-card-section>
             <q-card-section class="dashboard-card__chart-section">
-              <Line :data="lineBalanceData" :options="lineOptions" />
+              <Line
+                v-if="
+                  lineBalanceData.datasets[0]?.data?.some(
+                    (value) => Number(value || 0) !== 0
+                  )
+                "
+                :data="lineBalanceData"
+                :options="lineOptions"
+              />
+              <div v-else class="dashboard-empty-state q-py-xl">
+                <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                <span>Sem dados no período selecionado.</span>
+              </div>
             </q-card-section>
           </q-card>
         </div>
@@ -533,7 +583,19 @@
             <q-card-section
               class="dashboard-card__chart-section dashboard-card__chart-section--wide"
             >
-              <Line :data="trendChartData" :options="lineOptions" />
+              <Line
+                v-if="
+                  trendChartData.datasets.some((dataset) =>
+                    dataset.data.some((value) => Number(value || 0) > 0)
+                  )
+                "
+                :data="trendChartData"
+                :options="lineOptions"
+              />
+              <div v-else class="dashboard-empty-state q-py-xl">
+                <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                <span>Sem dados no período selecionado.</span>
+              </div>
             </q-card-section>
           </q-card>
         </div>
@@ -549,6 +611,7 @@
             </q-card-section>
             <q-card-section class="dashboard-table-section">
               <q-table
+                v-if="incomeTableRows.length"
                 :rows="incomeTableRows"
                 :columns="incomeTableColumns"
                 row-key="month"
@@ -559,10 +622,11 @@
                 class="dashboard-table"
               />
               <div
-                v-if="!incomeTableRows.length"
-                class="text-caption text-grey-6 text-center q-py-lg"
+                v-else
+                class="dashboard-empty-state q-py-lg"
               >
-                Nenhum dado para exibir
+                <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                <span>Sem dados no período selecionado.</span>
               </div>
             </q-card-section>
           </q-card>
@@ -574,6 +638,7 @@
             </q-card-section>
             <q-card-section class="dashboard-table-section">
               <q-table
+                v-if="expenseTableRows.length"
                 :rows="expenseTableRows"
                 :columns="expenseTableColumns"
                 row-key="month"
@@ -584,10 +649,11 @@
                 class="dashboard-table"
               />
               <div
-                v-if="!expenseTableRows.length"
-                class="text-caption text-grey-6 text-center q-py-lg"
+                v-else
+                class="dashboard-empty-state q-py-lg"
               >
-                Nenhum dado para exibir
+                <q-icon name="insert_chart_outlined" size="20px" class="q-mb-xs" />
+                <span>Sem dados no período selecionado.</span>
               </div>
             </q-card-section>
           </q-card>
@@ -602,12 +668,12 @@ import { computed, inject, onMounted, ref } from "vue";
 import { useQuasar } from "quasar";
 import { Bar, Line, Pie } from "vue-chartjs";
 import { useFinanceStore } from "../stores/financeStore";
-
+import { useRouter } from "vue-router";
 import { formatMoney } from "../utils/formatMoney";
 
 const finance = useFinanceStore();
 const $q = useQuasar();
-
+const router = useRouter();
 const now = new Date();
 const selectedMonths = ref([now.getMonth() + 1]);
 const selectedYear = ref(now.getFullYear());
@@ -1403,6 +1469,17 @@ onMounted(() => {
   border-radius: var(--radius);
 }
 
+.dashboard-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-3);
+  text-align: center;
+  font-size: 12px;
+}
+
 /* ── Stat cards ─────────────────────────────────────────── */
 .stat-card {
   background: var(--surface);
@@ -1616,6 +1693,13 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.installments-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .installment-row {
   padding-bottom: 14px;

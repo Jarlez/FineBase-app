@@ -1,5 +1,14 @@
 <template>
-  <q-layout view="hHh lpR fFf" class="app-layout">
+  <!-- Loading inicial de auth -->
+  <div v-if="auth.loading" class="app-init">
+    <q-spinner-dots color="primary" size="36px" />
+  </div>
+
+  <!-- Rotas públicas (portal, login, cadastro) — sem layout -->
+  <router-view v-else-if="isPublicRoute" />
+
+  <!-- Layout protegido -->
+  <q-layout v-else view="hHh lpR fFf" class="app-layout">
 
     <!-- ─── Header ───────────────────────────────────────────────── -->
     <q-header class="app-header">
@@ -33,7 +42,26 @@
             :aria-label="isDark ? 'Modo claro' : 'Modo escuro'"
             @click="toggleTheme"
           />
-          <div class="app-avatar" title="Conta pessoal">J</div>
+          <div class="app-avatar" :title="auth.userEmail" role="button" tabindex="0">
+            {{ auth.userInitials }}
+            <q-menu anchor="bottom right" self="top right" :offset="[0, 6]" class="avatar-menu">
+              <q-list style="min-width: 172px; padding: 4px 0">
+                <q-item clickable v-close-popup @click="$router.push('/perfil')" class="avatar-menu-item">
+                  <q-item-section avatar style="min-width: 28px">
+                    <q-icon name="manage_accounts" size="15px" style="color: var(--text-3)" />
+                  </q-item-section>
+                  <q-item-section style="font-size: 13.5px; color: var(--text)">Ver perfil</q-item-section>
+                </q-item>
+                <q-separator style="margin: 4px 0; border-color: var(--border-soft)" />
+                <q-item clickable v-close-popup @click="handleLogout" class="avatar-menu-item avatar-menu-item--danger">
+                  <q-item-section avatar style="min-width: 28px">
+                    <q-icon name="logout" size="15px" />
+                  </q-item-section>
+                  <q-item-section style="font-size: 13.5px">Encerrar sessão</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </div>
         </div>
       </q-toolbar>
     </q-header>
@@ -53,7 +81,7 @@
         <template v-if="!isMini">
           <div>
             <div class="side-brand-name">FineBase</div>
-            <div class="side-brand-sub">Conta pessoal</div>
+            <div class="side-brand-sub">{{ auth.userName || auth.userEmail }}</div>
           </div>
         </template>
       </div>
@@ -140,9 +168,20 @@
         </q-icon>
       </div>
 
-      <!-- Ajuda + Suporte (fixados no fundo) -->
-      <div v-if="!isMini" class="side-group-label side-group-label--bottom">Ajuda & Suporte</div>
+      <!-- Ajuda + Suporte + Perfil (fixados no fundo) -->
+      <div v-if="!isMini" class="side-group-label side-group-label--bottom">Conta</div>
       <div class="side-nav side-nav--bottom" :class="{ 'q-mt-auto': isMini }">
+        <router-link to="/perfil" custom v-slot="{ isActive, navigate }">
+          <button
+            class="side-item"
+            :class="{ 'is-active': isActive }"
+            @click="navigate"
+          >
+            <q-icon name="manage_accounts" size="16px" class="side-item-icon" />
+            <span v-if="!isMini" class="side-item-label">Perfil</span>
+            <q-tooltip v-if="isMini" anchor="center right" self="center left">Perfil</q-tooltip>
+          </button>
+        </router-link>
         <button class="side-item" @click="helpOpen = true">
           <q-icon name="help_outline" size="16px" class="side-item-icon" />
           <span v-if="!isMini" class="side-item-label">Ajuda</span>
@@ -152,6 +191,11 @@
           <q-icon name="shield_outlined" size="16px" class="side-item-icon" />
           <span v-if="!isMini" class="side-item-label">Suporte & Legal</span>
           <q-tooltip v-if="isMini" anchor="center right" self="center left">Suporte & Legal</q-tooltip>
+        </button>
+        <button class="side-item side-item--logout" @click="handleLogout">
+          <q-icon name="logout" size="16px" class="side-item-icon" />
+          <span v-if="!isMini" class="side-item-label">Sair</span>
+          <q-tooltip v-if="isMini" anchor="center right" self="center left">Sair</q-tooltip>
         </button>
       </div>
     </q-drawer>
@@ -587,15 +631,21 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, provide } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Dark, useQuasar } from 'quasar'
 import { useFinanceStore } from './stores/financeStore'
+import { useAuthStore } from './stores/authStore'
+import { onAuthStateChange } from './services/authService'
 import BudgetDialog from './components/BudgetDialog.vue'
 import SearchDialog from './components/SearchDialog.vue'
 
 const route = useRoute()
+const router = useRouter()
 const finance = useFinanceStore()
+const auth = useAuthStore()
 const $q = useQuasar()
+
+const isPublicRoute = computed(() => !!route.meta?.guestOnly)
 
 const isMini = ref(false)
 const isDark = ref(false)
@@ -626,6 +676,13 @@ const PAGE_NAMES = {
   recurring:  'Recorrentes',
   'monthly-closing': 'Fechamento mensal',
   score: 'Score',
+  profile: 'Perfil',
+}
+
+async function handleLogout() {
+  await auth.logout()
+  finance.clearData()
+  router.push('/portal')
 }
 
 const currentPageName = computed(() => PAGE_NAMES[route.name] || 'FineBase')
@@ -691,6 +748,8 @@ function toggleTheme() {
   localStorage.setItem('fb-theme', isDark.value ? 'dark' : 'light')
 }
 
+let authSubscription = null
+
 onMounted(() => {
   document.documentElement.classList.add('v-obsidian')
   const saved = localStorage.getItem('fb-theme')
@@ -699,16 +758,39 @@ onMounted(() => {
     Dark.set(true)
     document.documentElement.classList.add('dark')
   }
+
   window.addEventListener('keydown', handleSearchShortcut)
-  finance.loadData()
+
+  // Listen for Supabase auth state changes (handles Google OAuth callback etc.)
+  authSubscription = onAuthStateChange((_event, session) => {
+    auth.setSession(session)
+    if (_event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    if (_event === 'SIGNED_OUT') {
+      finance.clearData()
+      router.push('/portal')
+    } else if (_event === 'SIGNED_IN' && session) {
+      finance.loadData()
+    }
+  })
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleSearchShortcut)
+  authSubscription?.unsubscribe()
 })
 </script>
 
 <style scoped>
+.app-init {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg, #f1f5f9);
+}
+
 .app-layout { overflow: hidden; }
 
 /* Header */
@@ -792,8 +874,10 @@ onUnmounted(() => {
   font-size: 12px; font-weight: 600;
   font-family: var(--font-mono);
   flex-shrink: 0;
-  cursor: default;
+  cursor: pointer;
+  transition: opacity 0.12s;
 }
+.app-avatar:hover { opacity: 0.85; }
 
 /* ── Sidebar ───────────────────────────────────────────── */
 .side-brand {
@@ -897,6 +981,10 @@ onUnmounted(() => {
   padding-bottom: 4px;
 }
 
+.side-item--logout .side-item-icon { color: var(--neg) !important; opacity: 0.7; }
+.side-item--logout { color: var(--neg) !important; opacity: 0.7; }
+.side-item--logout:hover { opacity: 1; background: rgba(220,38,38,.08) !important; }
+
 /* ── Help dialog ───────────────────────────────────────── */
 .help-dialog {
   background: var(--bg) !important;
@@ -979,4 +1067,12 @@ onUnmounted(() => {
   border-radius: 4px;
   color: var(--accent);
 }
+
+/* ── Avatar dropdown menu ──────────────────────────────── */
+.avatar-menu { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important; }
+.avatar-menu-item { padding: 6px 12px !important; min-height: 36px !important; border-radius: 6px !important; margin: 0 4px !important; }
+.avatar-menu-item:hover { background: var(--bg-soft) !important; }
+.avatar-menu-item--danger { color: #dc2626 !important; }
+.avatar-menu-item--danger .q-icon { color: #dc2626 !important; }
+.avatar-menu-item--danger:hover { background: rgba(220,38,38,.08) !important; }
 </style>

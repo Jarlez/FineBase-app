@@ -14,7 +14,9 @@
       "Read(//c/Users/Jarles/Downloads/Trabalho e Projetos/Obsidian\" 2>/dev/**)",
       "Bash(ls \"C:/Users/Jarles/Downloads/Trabalho e Projetos/Obsidian/\")",
       "Read(//c/Users/Jarles/Downloads/Trabalho e Projetos/Obsidian/**)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__execute_sql"
     ]
   }
 }

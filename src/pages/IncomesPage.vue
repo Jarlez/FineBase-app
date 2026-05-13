@@ -100,7 +100,8 @@
                 no-caps
                 icon="save"
                 type="submit"
-                :loading="finance.loading"
+                :loading="submitting"
+                :disable="submitting"
               />
             </div>
           </q-form>
@@ -160,7 +161,7 @@
                 {{ topSourceName }}
               </span>
               <span class="stat-card__subtext">
-                {{ topSourceSubtext }}
+                {{ topSourceSubtext }} do total
               </span>
             </div>
           </q-card-section>
@@ -264,6 +265,7 @@
             dense
             icon="edit"
             color="grey-7"
+            :disable="deletingId === props.row.id"
             @click="
               startEdit(props.row);
               formModalOpen = true;
@@ -276,6 +278,8 @@
             dense
             icon="delete"
             color="grey-7"
+            :loading="deletingId === props.row.id"
+            :disable="deletingId === props.row.id"
             @click="removeIncome(props.row)"
           />
         </q-td>
@@ -423,7 +427,7 @@ const topSourceName = computed(() => topSourceData.value?.name ?? "–");
 const topSourceSubtext = computed(() => {
   const d = topSourceData.value;
   if (!d) return "";
-  return `${formatCurrency(d.amount)} (${d.percent}% do total)`;
+  return `${formatCurrency(d.amount)} (${d.percent}%)`;
 });
 
 const lastMonthComparison = computed(() => {
@@ -543,6 +547,8 @@ const editingId = ref(null);
 const formModalOpen = ref(false);
 const detailsModalOpen = ref(false);
 const selectedIncomeForDetails = ref(null);
+const submitting = ref(false);
+const deletingId = ref(null);
 
 const isEditing = computed(() => editingId.value !== null);
 const isInitialLoading = computed(
@@ -577,6 +583,7 @@ function onReset() {
 }
 
 async function onSubmit() {
+  if (submitting.value) return;
   const payload = {
     date: form.date,
     description: form.description,
@@ -584,6 +591,7 @@ async function onSubmit() {
     amount: Number(form.amount),
   };
 
+  submitting.value = true;
   try {
     if (isEditing.value && editingId.value) {
       await finance.editIncome(editingId.value, payload);
@@ -605,6 +613,8 @@ async function onSubmit() {
       type: "negative",
       message: error.message || "Erro ao salvar entrada.",
     });
+  } finally {
+    submitting.value = false;
   }
 }
 
@@ -631,6 +641,7 @@ async function removeIncome(row) {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
+    deletingId.value = row.id;
     try {
       await finance.removeIncome(row.id);
       $q.notify({
@@ -642,6 +653,8 @@ async function removeIncome(row) {
         type: "negative",
         message: error.message || "Erro ao excluir entrada.",
       });
+    } finally {
+      deletingId.value = null;
     }
   });
 }
@@ -725,7 +738,7 @@ onMounted(() => {
   color: var(--text);
 }
 .stat-card__top-category {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text);
 }
